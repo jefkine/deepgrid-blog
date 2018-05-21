@@ -204,7 +204,7 @@ The regularization term is as follows:
 $$
 \begin{align}
 \frac{\partial \Omega}{\textbf{W}^{hh}} &= \sum_{k} \frac{\partial \Omega_{k}}{\textbf{W}^{hh}} \tag{15} \\
-&= \sum_{k} \frac{\partial\left( \frac{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} {\textbf{W}^{hh}}^\top \textbf{diag} \left( f'(h_{k})\right) \right\rVert}{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} \right\rVert} -1 \right)^{2}}{\partial \textbf{W}^{hh}}  \tag{16}
+&= \sum_{k} \frac{\partial\left( \frac{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} {\textbf{W}^{hh}}^\top \textbf{diag} \left( f'(\textbf{h}_{k})\right) \right\rVert}{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} \right\rVert} -1 \right)^{2}}{\partial \textbf{W}^{hh}}  \tag{16}
 \end{align}
 $$
 
