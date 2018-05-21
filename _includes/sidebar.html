@@ -1,0 +1,43 @@
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-family: 'PT Sans'; font-size: 42px;">
+        <a href="{{ site.baseurl }}">
+          {{ site.title }}
+        </a>
+      </h1>
+      <p class="lead">{{ site.description }}</p>
+    </div>
+
+    <div>
+      {% for post in site.posts limit:1 %}
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 16px; color: #555">Latest Article:</p>
+        <a href="{{site.url}}{{post.url}}"><strong>{{post.title}}</strong></a>
+        <p style="margin-top: 0px; margin-bottom: 10px;"><span style="font-size: 12px; color: #555">{{post.date | date: "%-d %B %Y" }}</span></p>
+      {% endfor %}
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item{% if page.url == site.baseurl %} active{% endif %}" href="{{ site.baseurl }}">Home</a>
+
+      {% comment %}
+        The code below dynamically generates a sidebar nav of pages with
+        `layout: page` in the front-matter. See readme for usage.
+      {% endcomment %}
+
+      {% assign pages_list = site.pages %}
+      {% for node in pages_list %}
+        {% if node.title != null %}
+          {% if node.layout == "page" %}
+            <a class="sidebar-nav-item{% if page.url == node.url %} active{% endif %}" href="{{ node.url }}">{{ node.title }}</a>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </nav>
+
+    <p style="margin: 0px; color: #fff"><a href="https://github.com/jefkine" target="_blank">GitHub</p>
+    <p style="margin-top: 0px; margin-bottom: 10px;"><a href="https://twitter.com/jefkine" target="_blank">Twitter @jefkine</a></p>
+
+    <p>&copy; {{ site.time | date: '%Y' }}. All rights reserved.</p>
+  </div>
+</div>

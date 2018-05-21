@@ -1,0 +1,51 @@
+# Dependencies
+markdown: kramdown
+
+kramdown:
+  input: GFM
+  hard_wrap: false
+
+highlighter: rouge
+
+# Allow future dated posts to be published
+future: true
+
+# Permalinks
+permalink:        pretty
+# relative_permalinks: true
+
+# Setup
+title:            DeepGrid
+tagline:          'Deep Learning'
+description:      'Organic Deep Learning.'
+url:              http://www.jefkine.com
+baseurl:          /
+
+author:
+  name:          'Jefkine Kafunah'
+  first_name:    'Jefkine'
+  last_name:     'Kafunah'
+  url:           https://twitter.com/jefkine
+  twitter:       'jefkine'
+
+# paginate:         2
+# Pagination
+paginate: 4
+paginate_path: "/page/:num/"
+
+paginate_category_basepath: '/cat/:name/'
+paginate_category_layout: 'categories.html'
+
+# Google services
+google_analytics: UA-82905904-1
+
+# Disqus post comments
+disqus_shortname: jefkine
+
+# Custom vars
+version:          2.1.0
+
+github:
+  repo:           https://github.com/jefkine
+
+gems: [jekyll-paginate, jekyll-paginate-categories, jekyll-gist, jekyll-sitemap, jekyll-seo-tag]

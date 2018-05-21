@@ -1,0 +1,14 @@
+{% for related in site.posts reversed limit:5 %}
+  {% if related.category == include.category %}
+    {% if related.title != include.title %}
+      <li>
+        <h3>
+          <a href="{{site.url}}{{related.url}}">
+            {{related.title}}
+            <small>{{ related.date | date_to_string }}</small>
+          </a>
+        </h3>
+      </li>
+    {% endif %}
+  {% endif %}
+{% endfor %}

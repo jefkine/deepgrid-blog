@@ -1,0 +1,20 @@
+---
+layout: default
+---
+
+<div class="post">
+  <h1 class="post-title">{{ page.title }}</h1>
+  <span class="post-date">{{page.author}}, {{ page.date | date: "%-d %B %Y"}}</span>
+  {{ content }}
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    {% include related.html category=page.category title=page.title %}
+  </ul>
+</div>
+
+{% if site.disqus_shortname %}
+  {% include disqus_comments.html %}
+{% endif %}
