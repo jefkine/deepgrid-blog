@@ -1,0 +1,1740 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+ <title>DeepGrid</title>
+ <link href="http://www.jefkine.com/atom.xml" rel="self"/>
+ <link href="http://www.jefkine.com/"/>
+ <updated>2018-05-21T21:20:11+03:00</updated>
+ <id>http://www.jefkine.com</id>
+ <author>
+   <name>Jefkine Kafunah</name>
+   <email></email>
+ </author>
+
+ 
+ <entry>
+   <title>Vanishing And Exploding Gradient Problems</title>
+   <link href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/"/>
+   <updated>2018-05-21T20:22:02+03:00</updated>
+   <id>http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems</id>
+   <content type="html">&lt;h3 id=&quot;introduction&quot;&gt;Introduction&lt;/h3&gt;
+&lt;p&gt;Two of the common problems associated with training of deep neural networks using gradient-based learning methods and backpropagation include the &lt;strong&gt;vanishing&lt;/strong&gt; gradients and that of the &lt;strong&gt;exploding&lt;/strong&gt; gradients.&lt;/p&gt;
+
+&lt;p&gt;In this article we explore how these problems affect the training of recurrent neural networks and also explore some of the methods that have been proposed as solutions.&lt;/p&gt;
+
+&lt;h3 id=&quot;recurrent-neural-network&quot;&gt;Recurrent Neural Network&lt;/h3&gt;
+&lt;p&gt;A recurrent neural network has the structure of multiple feedforward neural networks with connections among their hidden units. Each layer on the RNN represents a distinct time step and the weights are shared across time.&lt;/p&gt;
+
+&lt;p&gt;The combined feedfoward neural networks work over time to compute parts of the output one at a time sequentially.&lt;/p&gt;
+
+&lt;p&gt;Connections among the hidden units allow the model to iteratively build a relevant summary of past observations hence capturing dependencies between events that are several steps apart in the data.&lt;/p&gt;
+
+&lt;p&gt;An illustration of the RNN model is given below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/rnn_model.png&quot; alt=&quot;RNN Model&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;For any given time point &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt;, the hidden state &lt;script type=&quot;math/tex&quot;&gt;\textbf{h}_{t}&lt;/script&gt; is computed using a function &lt;script type=&quot;math/tex&quot;&gt;f_{\textbf{W}}&lt;/script&gt; with parameters &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}&lt;/script&gt; that takes in the current data point &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}_{t}&lt;/script&gt; and hidden state in the previous time point &lt;script type=&quot;math/tex&quot;&gt;\textbf{h}_{t-1}&lt;/script&gt;. i.e &lt;script type=&quot;math/tex&quot;&gt;f_{\textbf{W}}(\textbf{h}_{t-1}, \textbf{x}_{t})&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{W}&lt;/script&gt; represents a set of tunable parameters or weights on which the function &lt;script type=&quot;math/tex&quot;&gt;f_{\textbf{W}}&lt;/script&gt; depends. Note that the same weight matrix &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}&lt;/script&gt; and function &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; are used at every timestep.&lt;/p&gt;
+
+&lt;p&gt;Parameters &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}&lt;/script&gt; control what will be remembered and what will be discarded about the past sequence allowing data points from the past say &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}_{t - n}&lt;/script&gt; for &lt;script type=&quot;math/tex&quot;&gt;n \geq 1&lt;/script&gt; to influence the current and even later outputs by way of the recurrent connections&lt;/p&gt;
+
+&lt;p&gt;In its functional form, the recurrent neural network can be represented as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\textbf{h}_{t} &amp;= f_{\textbf{W}}\left(\textbf{h}_{t-1}, \textbf{x}_{t} \right) \tag{1} \\
+\textbf{h}_{t} &amp;= f\left(\textbf{W}^{hx}x_{t} + \textbf{W}^{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2a} \\
+\textbf{h}_{t} &amp;= \textbf{tanh}\left(\textbf{W}^{hx}x_{t} +  \textbf{W}^{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2b} \\
+\hat{\textbf{y}}_{t} &amp;= \textbf{softmax}\left(\textbf{W}^{yh}h_{t} + \textbf{b}^{y}\right) \tag{3}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;From the above equations we can see that the RNN model is parameterized by three weight matrices&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^{hx} \in \mathbb{R}^{h \times x}&lt;/script&gt; is the weight matrix between input and the hidden layer&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^{hh} \in \mathbb{R}^{h \times h}&lt;/script&gt; is the weight matrix between two hidden layers&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^{yh} \in \mathbb{R}^{y \times h}&lt;/script&gt; is the weight matrix between the hidden layer and the output&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;We also have bias vectors incorporated into the model as well&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{b}^{h} \in \mathbb{R}^{h}&lt;/script&gt; is the bias vector added to the hidden layer&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{b}^{y} \in \mathbb{R}^{y}&lt;/script&gt; is the bias vector added to the output layer&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{tanh}(\cdot)&lt;/script&gt; is the non-linearity added to the hidden states while &lt;script type=&quot;math/tex&quot;&gt;\textbf{softmax}(\cdot)&lt;/script&gt; is the activation function used in the output layer.&lt;/p&gt;
+
+&lt;p&gt;RNNs are trained in a sequential supervised manner. For time step &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt;, the error is given by the difference between the predicted and targeted: &lt;script type=&quot;math/tex&quot;&gt;(\hat{\textbf{y}_t} - \textbf{y}_{t})&lt;/script&gt;. The overall loss &lt;script type=&quot;math/tex&quot;&gt;\mathcal{L}(\hat{\textbf{y}}, \textbf{y})&lt;/script&gt; is usually a sum of time step specific losses found in the range of intrest &lt;script type=&quot;math/tex&quot;&gt;[t, T]&lt;/script&gt; given by:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\mathcal{\large{L}} (\hat{\textbf{y}}, \textbf{y}) = \sum_{t = 1}^{T} \mathcal{ \large{L} }(\hat{\textbf{y}_t}, \textbf{y}_{t})  \tag{4}
+\end{align}&lt;/script&gt;
+
+&lt;h3 id=&quot;vanishing-and-exploding-gradients&quot;&gt;Vanishing and Exploding Gradients&lt;/h3&gt;
+&lt;p&gt;Training of the unfolded recurrent neural network is done across multiple time steps using backpropagation where the overall error gradient is equal to the sum of the individual error gradients at each time step.&lt;/p&gt;
+
+&lt;p&gt;This algorithm is known as &lt;strong&gt;backpropagation through time (BPTT)&lt;/strong&gt;. If we take a total of &lt;script type=&quot;math/tex&quot;&gt;T&lt;/script&gt; time steps, the error is given by the following equation:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\frac{\partial \textbf{E}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}_{t}}{\partial \textbf{W}} \tag{5}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;Applying chain rule to compute the overall error gradient we have the following&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\frac{\partial \textbf{E}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}}{\partial \textbf{y}_{t}} \frac{\partial \textbf{y}_{t}}{\partial \textbf{h}_{t}} \overbrace{\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}}^{ \bigstar } \frac{\partial \textbf{h}_{k}}{\partial \textbf{W}} \tag{6}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;The term marked &lt;script type=&quot;math/tex&quot;&gt;\bigstar&lt;/script&gt; ie &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}&lt;/script&gt; is the derivative of the hidden state at time &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt; with respect to the hidden state at time &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt;. This term  involves products of Jacobians &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}}&lt;/script&gt; over subsequences linking an event at time &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt; and one at time &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; given by:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}} &amp;= \frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}} \frac{\partial \textbf{h}_{t-1}}{\partial \textbf{h}_{t-2}} \cdots \frac{\partial \textbf{h}_{k+1}}{\partial \textbf{h}_{k}}  \tag{7} \\
+&amp;= \prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}}  \tag{8}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The product of Jacobians in Eq. &lt;script type=&quot;math/tex&quot;&gt;7&lt;/script&gt; features the derivative of the term &lt;script type=&quot;math/tex&quot;&gt;\textbf{h}_{t}&lt;/script&gt; w.r.t &lt;script type=&quot;math/tex&quot;&gt;\textbf{h}_{t-1}&lt;/script&gt;, i.e &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}&lt;/script&gt; which when evaluated on Eq. &lt;script type=&quot;math/tex&quot;&gt;2a&lt;/script&gt; yields &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^\top \left[ f'\left(\textbf{h}_{t-1}\right) \right]&lt;/script&gt;, hence:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} = \prod_{i=k+1}^{t} \textbf{W}^\top \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right]  \tag{9}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;If we perform eigendecomposition on the Jacobian matrix &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}&lt;/script&gt; given by &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^\top \text{diag} \left[ f'\left(\textbf{h}_{t-1}\right) \right]&lt;/script&gt;, we get the eigenvalues &lt;script type=&quot;math/tex&quot;&gt;\lambda_{1}, \lambda_{2}, \cdots, \lambda_{n}&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;\lvert\lambda_{1}\rvert \gt \lvert\lambda_{2}\rvert \gt\cdots \gt \lvert\lambda_{n}\rvert&lt;/script&gt; and the corresponding eigenvectors &lt;script type=&quot;math/tex&quot;&gt;\textbf{v}_{1},\textbf{v}_{1},\cdots,\textbf{v}_{n}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Any change on the hidden state &lt;script type=&quot;math/tex&quot;&gt;\Delta\textbf{h}_{t}&lt;/script&gt; in the direction of a vector &lt;script type=&quot;math/tex&quot;&gt;\textbf{v}_{i}&lt;/script&gt; has the effect of multiplying the change with the eigenvalue associated with this eigenvector i.e &lt;script type=&quot;math/tex&quot;&gt;\lambda_{i}\Delta\textbf{h}_{t}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;The product of these Jacobians as seen in Eq. &lt;script type=&quot;math/tex&quot;&gt;9&lt;/script&gt; imply that subsequent time steps, will result in scaling the change with a factor equivalent to &lt;script type=&quot;math/tex&quot;&gt;\lambda_{i}^{t}&lt;/script&gt;, where &lt;script type=&quot;math/tex&quot;&gt;\text{t}&lt;/script&gt; represents the current time step.&lt;/p&gt;
+
+&lt;p&gt;Looking at the sequence &lt;script type=&quot;math/tex&quot;&gt;\lambda_{i}^{1}\Delta\textbf{h}_{1}, \lambda_{i}^{2}\Delta\textbf{h}_{2}, \cdots \lambda_{i}^{n}\Delta\textbf{h}_{n}&lt;/script&gt;, it is easy to see that the factor &lt;script type=&quot;math/tex&quot;&gt;\lambda_{i}^{t}&lt;/script&gt; which represents the &lt;script type=&quot;math/tex&quot;&gt;\text{i}^{th}&lt;/script&gt; eigenvalue raised to the power of the current time step &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt; will end up dominating the &lt;script type=&quot;math/tex&quot;&gt;\Delta\textbf{h}_{t}&lt;/script&gt;’s because this term grows exponentially fast as &lt;script type=&quot;math/tex&quot;&gt;\text{t} \rightarrow \infty&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;This means that if the largest eigenvalue &lt;script type=&quot;math/tex&quot;&gt;\lambda_{1} \lt 1&lt;/script&gt; then the gradient will varnish while if the value of &lt;script type=&quot;math/tex&quot;&gt;\lambda_{1} \gt 1&lt;/script&gt;, the gradient explodes.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Alternate intuition:&lt;/strong&gt; Lets take a deeper look at the norms associated with these Jacobians:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}^\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \tag{10}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;In Eq. &lt;script type=&quot;math/tex&quot;&gt;10&lt;/script&gt; above, we set &lt;script type=&quot;math/tex&quot;&gt;\gamma_{\textbf{W}}&lt;/script&gt;, the largest eigenvalue associated with &lt;script type=&quot;math/tex&quot;&gt;\left\lVert \textbf{W}^\top \right\rVert&lt;/script&gt;  as its upper bound, while &lt;script type=&quot;math/tex&quot;&gt;\gamma_{\textbf{h}}&lt;/script&gt; largest eigenvalue associated with &lt;script type=&quot;math/tex&quot;&gt;\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert&lt;/script&gt; as its corresponding the upper bound.&lt;/p&gt;
+
+&lt;p&gt;Depending on the activation function &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; chosen for the model, the derivative &lt;script type=&quot;math/tex&quot;&gt;f'&lt;/script&gt; in &lt;script type=&quot;math/tex&quot;&gt;\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert&lt;/script&gt; will be upper bounded by different values. For &lt;script type=&quot;math/tex&quot;&gt;\textbf{tanh}&lt;/script&gt; we have &lt;script type=&quot;math/tex&quot;&gt;\gamma_{\textbf{h}} = 1&lt;/script&gt; while for &lt;script type=&quot;math/tex&quot;&gt;\textbf{sigmoid}&lt;/script&gt; we have &lt;script type=&quot;math/tex&quot;&gt;\gamma_{\textbf{h}} = 1/4&lt;/script&gt;. This is illustrated in the diagram below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/activation_derivatives.png&quot; alt=&quot;Activation Plots&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The chosen upper bounds &lt;script type=&quot;math/tex&quot;&gt;\gamma_{\textbf{W}}&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\gamma_{\textbf{h}}&lt;/script&gt; end up being a constant term resulting from their product as shown in Eq. &lt;script type=&quot;math/tex&quot;&gt;11&lt;/script&gt; below:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}^\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \leq \gamma_{\textbf{W}} \gamma_{\textbf{h}} \tag{11}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;The gradient &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}&lt;/script&gt;, as seen in Eq. &lt;script type=&quot;math/tex&quot;&gt;8&lt;/script&gt;, is a product of Jacobian matrices that are multiplied many times, &lt;script type=&quot;math/tex&quot;&gt;t-k&lt;/script&gt; times to be precise in our case.&lt;/p&gt;
+
+&lt;p&gt;This relates well with Eq. &lt;script type=&quot;math/tex&quot;&gt;11&lt;/script&gt; above where the norm &lt;script type=&quot;math/tex&quot;&gt;\left\lVert \frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}} \right\rVert&lt;/script&gt; is essentially given by a constant term &lt;script type=&quot;math/tex&quot;&gt;\left( \gamma_{\textbf{W}} \gamma_{\textbf{h}} \right)&lt;/script&gt; to the power &lt;script type=&quot;math/tex&quot;&gt;t -k&lt;/script&gt; as shown below:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\left\lVert \frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}} \right\rVert = \left\lVert \prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq  \left( \gamma_{\textbf{W}} \gamma_{\textbf{h}} \right)^{t-k} \tag{12}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;As the sequence gets longer (i.e the distance between &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; increases), then the value of &lt;script type=&quot;math/tex&quot;&gt;\gamma&lt;/script&gt; will determine if the gradient either gets very large (&lt;strong&gt;explodes&lt;/strong&gt;) on gets very small (&lt;strong&gt;varnishes&lt;/strong&gt;).&lt;/p&gt;
+
+&lt;p&gt;Since &lt;script type=&quot;math/tex&quot;&gt;\gamma&lt;/script&gt; is associated with the leading eigenvalues of &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}}&lt;/script&gt;, the recursive product of &lt;script type=&quot;math/tex&quot;&gt;t -k&lt;/script&gt; Jacobian matrices as seen in Eq. &lt;script type=&quot;math/tex&quot;&gt;12&lt;/script&gt; makes it possible to influence the overall gradient in such a way that for &lt;script type=&quot;math/tex&quot;&gt;\gamma \lt 1&lt;/script&gt; the gradient tends to &lt;strong&gt;varnish&lt;/strong&gt;  while for &lt;script type=&quot;math/tex&quot;&gt;\gamma \gt 1&lt;/script&gt; the gradient tends to &lt;strong&gt;explode&lt;/strong&gt;. This corresponds nicely with our earlier intuition involving &lt;script type=&quot;math/tex&quot;&gt;\Delta\textbf{h}_{t}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;These problems ultimately prevent the input at time step &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; (past) to have any influence on the output at stage &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt; (present).&lt;/p&gt;
+
+&lt;h3 id=&quot;proposed-solutions-for-exploding-gradients&quot;&gt;Proposed Solutions For Exploding Gradients&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;Truncated Backpropagation Through Time (TBPTT):&lt;/strong&gt; This method sets up some maximum number of time steps &lt;script type=&quot;math/tex&quot;&gt;n&lt;/script&gt; is along which error can be propagated. This means in Eq. &lt;script type=&quot;math/tex&quot;&gt;12&lt;/script&gt;, we have &lt;script type=&quot;math/tex&quot;&gt;t - n&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;n \ll k&lt;/script&gt; hence limiting the number of time steps factored into the overall error gradient during backpropagation.&lt;/p&gt;
+
+&lt;p&gt;This helps prevent the gradient from growing exponentially beyond &lt;script type=&quot;math/tex&quot;&gt;n&lt;/script&gt; steps. A major drawback with this method is that it sacrifices the ability to learn long-range dependencies beyond the limited &lt;script type=&quot;math/tex&quot;&gt;t -n&lt;/script&gt; range.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;L1 and L2 Penalty On The Recurrent Weights &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^{hh}&lt;/script&gt;:&lt;/strong&gt; This method [1] uses regularization to ensures that the spectral radius of the &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^{hh}&lt;/script&gt; does not exceed &lt;script type=&quot;math/tex&quot;&gt;1&lt;/script&gt;, which in itself is a sufficient condition for gradients not to explode.&lt;/p&gt;
+
+&lt;p&gt;The drawback here however is that the model is limited to a simple regime, all input has to die out exponentially fast in time. This method cannot be used to train a generator model and also sacrifices the ability to learn long-range dependencies.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Teacher Forcing:&lt;/strong&gt; This method seeks to initialize the model in the right regime and the right region of space. It can be used in training of a generator model or models that work with unbounded memory lengths [2]. The drawback is that it requires the target to be defined at each time step.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Clipping Gradients:&lt;/strong&gt;  This method [1] seeks to rescale down gradients whenever they go beyond a given threshold. The gradients are prevented from exploding by rescaling them so that their norm is maintained at a value of less than or equal to the set threshold.&lt;/p&gt;
+
+&lt;p&gt;Let &lt;script type=&quot;math/tex&quot;&gt;\textbf{g}&lt;/script&gt; represent the gradient &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \textbf{E}}{\partial \textbf{W}}&lt;/script&gt;. If &lt;script type=&quot;math/tex&quot;&gt;\lVert \textbf{g} \rVert \ge \text{threshold}&lt;/script&gt;, then we set the value of &lt;script type=&quot;math/tex&quot;&gt;\textbf{g}&lt;/script&gt; to be:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\textbf{g} \leftarrow \frac{\text{threshold}}{\lVert \textbf{g} \rVert} \textbf{g} \tag{13}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;The drawback here is that this method introduces an additional hyper-parameter; the threshold.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Echo State Networks:&lt;/strong&gt; This method [1,8] works by not learning the weights between input to hidden &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^{hx}&lt;/script&gt; and the weights between hidden to hidden &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^{hh}&lt;/script&gt;. These weights are instead sampled from carefully chosen distributions. Training data is used to learn the  weights between hidden to output &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^{yh}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;The effect of this is that when weights in the recurrent connections &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}^{hh}&lt;/script&gt; are sampled so that their spectral radius is slightly less than 1, information fed into the model is held for a limited (small) number of time steps during the training process.&lt;/p&gt;
+
+&lt;p&gt;The drawback here is that these models loose the ability to learn long-range dependencies. This set up also has a negative effect on the varnishing gradient problem.&lt;/p&gt;
+
+&lt;h3 id=&quot;proposed-solutions-for-vanishing-gradients&quot;&gt;Proposed Solutions For Vanishing Gradients&lt;/h3&gt;
+
+&lt;p&gt;&lt;strong&gt;Hessian Free Optimizer With Structural Dumping:&lt;/strong&gt; This method [1,3] uses the Hessian which has the ability to rescale components in high dimensions independently since presumably, there is a high probability for long term components to be orthogonal to short term ones but in practice. However, one cannot guarantee that this property holds.&lt;/p&gt;
+
+&lt;p&gt;Structural dumping improves this by allowing the model to be more selective in the way it penalizes directions of change in parameter space, focusing on those that are more likely to lead to large changes in the hidden state sequence. This forces the change in state to be small, when parameter changes by some small value &lt;script type=&quot;math/tex&quot;&gt;\Delta \textbf{W}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Leaky Integration Units:&lt;/strong&gt; This method [1] forces a subset of the units to change slowly using the following &lt;script type=&quot;math/tex&quot;&gt;\textbf{leaky integration}&lt;/script&gt; state to state map:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\textbf{h}_{t,i} =\alpha_{i} \textbf{h}_{t-1,i} + \left( 1- \alpha_{i}\right) f_{\textbf{W}}\left(\textbf{h}_{t-1}, \textbf{x}_{t} \right) \tag{14}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;When &lt;script type=&quot;math/tex&quot;&gt;\alpha = 0&lt;/script&gt;, the unit corresponds to a standard RNN. In [5] different values of &lt;script type=&quot;math/tex&quot;&gt;\alpha&lt;/script&gt; were randomly sampled from &lt;script type=&quot;math/tex&quot;&gt;(0.02, 0.2)&lt;/script&gt;, allowing some units to react quickly while others are forced to change slowly, but also propagate signals and gradients further in time hence increasing the time it takes for gradients to vanishing.&lt;/p&gt;
+
+&lt;p&gt;The drawback here is that since values chosen for &lt;script type=&quot;math/tex&quot;&gt;\alpha \lt 1&lt;/script&gt; then the gradients can still vanish while also still explode via &lt;script type=&quot;math/tex&quot;&gt;f_{\textbf{W}}\left(\cdot\right)&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Vanishing Gradient Regularization:&lt;/strong&gt; This method [1] implements a regularizer that ensures during backpropagation, gradients neither increase or decrease much in magnitude. It does this by forcing the Jacobian matrices &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \textbf{h}_{k+1}}{\partial \textbf{h}_{k}}&lt;/script&gt; to preserve norm only in the relevant direction of the error &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;The regularization term is as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial \Omega}{\textbf{W}^{hh}} &amp;= \sum_{k} \frac{\partial \Omega_{k}}{\textbf{W}^{hh}} \tag{15} \\
+&amp;= \sum_{k} \frac{\partial\left( \frac{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} {\textbf{W}^{hh}}^\top \textbf{diag} \left( f'(h_{k})\right) \right\rVert}{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} \right\rVert} -1 \right)^{2}}{\partial \textbf{W}^{hh}}  \tag{16}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;&lt;strong&gt;Long Short-Term Memory:&lt;/strong&gt; This method makes use of sophisticated units the LSTMs [6] that implement gating mechanisms to help control the flow of information to and from the units. By shutting the gates, these units have the ability to create a linear self-loop through which allow information to flow for an indefinite amount of time thus overcoming the vanishing gradients problem.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Gated Recurrent Unit:&lt;/strong&gt; This method makes use of units known as GRUs [7] which have only two gating units that that modulate the flow of information inside the unit thus making them less restrictive as compared to the LSTMs, while still having the ability to allow information to flow for an indefinite amount of time hence overcoming the vanishing gradients problem.&lt;/p&gt;
+
+&lt;h3 id=&quot;conclusions&quot;&gt;Conclusions&lt;/h3&gt;
+
+&lt;p&gt;In this article we went through the intuition behind the vanishing and exploding gradient problems. The values of the largest eigenvalue &lt;script type=&quot;math/tex&quot;&gt;\lambda_{1}&lt;/script&gt; have a direct influence in the way the gradient behaves eventually. &lt;script type=&quot;math/tex&quot;&gt;\lambda_{1} \lt 1&lt;/script&gt; causes the gradients to varnish while &lt;script type=&quot;math/tex&quot;&gt;\lambda_{1} \gt 1&lt;/script&gt; caused the gradients to explode.&lt;/p&gt;
+
+&lt;p&gt;This leads us to the fact &lt;script type=&quot;math/tex&quot;&gt;\lambda_{1} = 1&lt;/script&gt; would avoid both the vanishing and exploding gradient problems and although it is not as straightforward as it seems. This fact however has been used as the intuition behind creating most of the proposed solutions.&lt;/p&gt;
+
+&lt;p&gt;The proposed solution are discussed in brief, with some key references that the readers would find useful in obtain a greater understanding of how they work. Feel free to leave questions or feedback in the comments section.&lt;/p&gt;
+
+&lt;h3 id=&quot;references&quot;&gt;References&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;Pascanu, Razvan; Mikolov, Tomas; Bengio, Yoshua (2012) On the difficulty of training Recurrent Neural Networks &lt;a href=&quot;https://arxiv.org/abs/1211.5063&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Doya, K. (1993). Bifurcations of recurrent neural networks in gradient descent learning. IEEE Transactions on Neural Networks, 1, 75–80. &lt;a href=&quot;https://pdfs.semanticscholar.org/b579/27b713a6f9b73c7941f99144165396483478.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Martens, J. and Sutskever, I. (2011). Learning recurrent neural networks with Hessian-free optimization. In Proc. ICML’2011 . ACM. &lt;a href=&quot;http://www.icml-2011.org/papers/532_icmlpaper.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Jaeger, H., Lukosevicius, M., Popovici, D., and Siewert, U. (2007). Optimization and applications of echo state networks with leaky- integrator neurons. Neural Networks, 20(3), 335–352. &lt;a href=&quot;https://pdfs.semanticscholar.org/a10e/c7cc6c42c7780ef631c038b16c49ed865038.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Yoshua Bengio, Nicolas Boulanger-Lewandowski, Razvan Pascanu, Advances in Optimizing Recurrent Networks arXiv report 1212.0901, 2012. &lt;a href=&quot;https://arxiv.org/pdf/1212.0901.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Hochreiter, S. and Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9(8):1735–1780. &lt;a href=&quot;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.4320&amp;amp;rep=rep1&amp;amp;type=pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Kyunghyun Cho, Bart Van Merriënboer, Caglar Gulcehre, Dzmitry Bahdanau, Fethi Bougares, Holger Schwenk, and Yoshua Bengio. Learning phrase representations using rnn encoder–decoder for statistical machine translation. In Proc. EMNLP, pages 1724–1734. ACL, 2014 &lt;a href=&quot;https://arxiv.org/pdf/1406.1078.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Lukoˇseviˇcius, M. and Jaeger, H. (2009). Reservoir computing approaches to recurrent neural network training. Computer Science Review, 3(3), 127–149. &lt;a href=&quot;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.843&amp;amp;rep=rep1&amp;amp;type=pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Factorization Machines</title>
+   <link href="http://www.jefkine.com/recsys/2017/03/27/factorization-machines/"/>
+   <updated>2017-03-27T01:00:02+03:00</updated>
+   <id>http://www.jefkine.com/recsys/2017/03/27/factorization-machines</id>
+   <content type="html">&lt;h3 id=&quot;introduction&quot;&gt;Introduction&lt;/h3&gt;
+&lt;p&gt;Factorization machines were first introduced by Steffen Rendle [1] in 2010. The idea behind FMs is to model interactions between features (explanatory variables) using factorized parameters. The FM model has the ability to the estimate all interactions between features even with extreme sparsity of data.&lt;/p&gt;
+
+&lt;p&gt;FMs are generic in the sense that they can mimic many different factorization models just by feature engineering. For this reason FMs combine the high-prediction accuracy of factorization models with the flexibility of feature engineering.&lt;/p&gt;
+
+&lt;h3 id=&quot;from-polynomial-regression-to-factorization-machines&quot;&gt;From Polynomial Regression to Factorization Machines&lt;/h3&gt;
+&lt;p&gt;In order for a recommender system to make predictions it relies on available data generated from recording of significant user events. These are records of transactions which indicate strong interest and intent for instance: downloads, purchases, ratings.&lt;/p&gt;
+
+&lt;p&gt;For a movie review system which records as transaction data; what rating &lt;script type=&quot;math/tex&quot;&gt;r \in \lbrace 1,2,3,4,5 \rbrace&lt;/script&gt; is given to a movie (item) &lt;script type=&quot;math/tex&quot;&gt;i \in I&lt;/script&gt; by a user &lt;script type=&quot;math/tex&quot;&gt;u \in U&lt;/script&gt;  at a certain time of rating &lt;script type=&quot;math/tex&quot;&gt;t \in \mathbb{R}&lt;/script&gt;, the resulting dataset could be depicted as follows:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/design_matrix.png&quot; alt=&quot;Design Matrix&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;If we model this as a regression problem, the data used for prediction is represented by a design matrix &lt;script type=&quot;math/tex&quot;&gt;X \in \mathbb{R}^{m \times n}&lt;/script&gt; consisting of a total of &lt;script type=&quot;math/tex&quot;&gt;m&lt;/script&gt; observations each made up of real valued feature vector &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x} \in \mathbb{R}^n&lt;/script&gt;. A feature vector from the above dataset could be represented as:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+(u,i,t) \rightarrow \mathbf{x} = (\underbrace{0,..,0,1,0,...,0}_{|U|},\underbrace{0,..,0,1,0,...,0}_{|I|},\underbrace{0,..,0,1,0,...,0}_{|T|})
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;where &lt;script type=&quot;math/tex&quot;&gt;n = \vert U \vert + \vert I \vert + \vert T \vert&lt;/script&gt; i.e &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x} \in \mathbb{R}^n&lt;/script&gt; is also represented as &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x} \in \mathbb{R}^{\vert U \vert + \vert I \vert + \vert T \vert}&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;This results in a supervised setting where the training dataset is organised in the form &lt;script type=&quot;math/tex&quot;&gt;D = \lbrace (x^{(1)}, y^{(1)}), (x^{(2)}, y^{(2)}),...(x^{(m)}, y^{(m)})\rbrace&lt;/script&gt;. Our task is to estimate a function &lt;script type=&quot;math/tex&quot;&gt;\hat{y}\left( \mathbf{x} \right) : \mathbb{R}^n \ \rightarrow \mathbb{R}&lt;/script&gt; which when provided with &lt;script type=&quot;math/tex&quot;&gt;i^{\text{th}}&lt;/script&gt; row &lt;script type=&quot;math/tex&quot;&gt;x^{i} \in \mathbb{R}^n&lt;/script&gt; as the input to can correctly predict the corresponding target &lt;script type=&quot;math/tex&quot;&gt;y^{i} \in \mathbb{R}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Using linear regression as our model function we have the following:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} \tag {1}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;Parameters to be learned from the training data&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;w_{0} \in \mathbb{R}&lt;/script&gt; is the global bias&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{w} \in \mathbb{R}^n&lt;/script&gt; are the weights for feature vector &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}_i \; \forall i&lt;/script&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;With three categorical variables: &lt;strong&gt;user&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;u&lt;/script&gt;, &lt;strong&gt;movie (item)&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;, and &lt;strong&gt;time&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt;, applying linear regression model to this data leads to:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + w_{u} + w_{i} + w_{t} \tag {2}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;This model works well and among others has the following advantages:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Can be computed in linear time &lt;script type=&quot;math/tex&quot;&gt;O(n)&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;Learning &lt;script type=&quot;math/tex&quot;&gt;\textbf{w}&lt;/script&gt; can be cast as a convex optimization problem&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The major drawback with this model is that it does not handle feature interactions. The three categorical variables are learned or weighted individually. We cannot therefore capture interactions such as which &lt;strong&gt;user&lt;/strong&gt;  likes or dislikes which &lt;strong&gt;movie (item)&lt;/strong&gt; based on the rating they give.&lt;/p&gt;
+
+&lt;p&gt;To capture this interaction, we could introduce a weight that combines both &lt;strong&gt;user&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;u&lt;/script&gt; and &lt;strong&gt;movie (item)&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;  interaction i.e &lt;script type=&quot;math/tex&quot;&gt;w_{ui}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;An order &lt;script type=&quot;math/tex&quot;&gt;2&lt;/script&gt; polynomial has the ability to learn a weight &lt;script type=&quot;math/tex&quot;&gt;w_{ij}&lt;/script&gt; for each feature combination. The resulting model is shown below:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} +  \sum_{i=1}^n \sum_{j=i+1}^n x_{i} x_{j} w_{ij} \tag {3}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;Parameters to be learned from the training data&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;w_{0} \in \mathbb{R}&lt;/script&gt; is the global bias&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{w} \in \mathbb{R}^n&lt;/script&gt; are the weights for feature vector &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}_i \; \forall i&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{W} \in \mathbb{R}^{n \times n}&lt;/script&gt; is the weight matrix for feature vector combination &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}_i \textbf{x}_j \; \forall i \; \forall j&lt;/script&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;With three categorical variables: &lt;strong&gt;user&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;u&lt;/script&gt;, &lt;strong&gt;movie (item)&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;, and &lt;strong&gt;time&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt;, applying order &lt;script type=&quot;math/tex&quot;&gt;2&lt;/script&gt; polynomial regression model to this data leads to:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + w_{u} + w_{i} + w_{t} + w_{ui}  + w_{ut} + w_{ti}  \tag {4}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;This model is an improvement over our previous model and among others has the following advantages:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Can capture feature interactions at least for two features at a time&lt;/li&gt;
+  &lt;li&gt;Learning &lt;script type=&quot;math/tex&quot;&gt;\textbf{w}&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}&lt;/script&gt; can be cast as a convex optimization problem&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Even with these notable improvements over the previous model, we still are faced with some challenges including the fact that we have now ended up with a &lt;script type=&quot;math/tex&quot;&gt;O(n^2)&lt;/script&gt; complexity which means that to train the model we now require more time and memory.&lt;/p&gt;
+
+&lt;p&gt;A key point to note is that in most cases, datasets from recommendation systems are mostly sparse and this will adversely affect the ability to learn &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}&lt;/script&gt; as it depends on the feature interactions being explicitly recorded in the available dataset. From the sparse dataset, we cannot obtain enough samples of the feature interactions needed to learn &lt;script type=&quot;math/tex&quot;&gt;w_{ij}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;The standard polynomial regression model suffers from the fact that feature interactions have to be modeled by an independent parameter &lt;script type=&quot;math/tex&quot;&gt;w_{ij}&lt;/script&gt;. &lt;strong&gt;Factorization machines&lt;/strong&gt; on the other hand ensure that all interactions between pairs of features are modeled using factorized interaction parameters.&lt;/p&gt;
+
+&lt;p&gt;The FM model of order &lt;script type=&quot;math/tex&quot;&gt;d = 2&lt;/script&gt; is defined as follows:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} + \sum_{i=1}^{n} \sum_{j=i+1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_i x_{j} \tag {5}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\langle \cdot \;,\cdot \rangle&lt;/script&gt; is the dot product of two feature vectors of size &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt;:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+\langle \textbf{v}_i , \textbf{v}_{j} \rangle = \sum_{f=1}^k v_{i,f} v_{j,f}  \tag {6}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;This means that Eq. &lt;script type=&quot;math/tex&quot;&gt;5&lt;/script&gt; can be written as:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} + \sum_{i=1}^{n} \sum_{j=i+1}^n x_i x_{j} \sum_{f=1}^k v_{i,f} v_{j,f}  \tag {7}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;Parameters to be learned from the training data&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;w_{0} \in \mathbb{R}&lt;/script&gt; is the global bias&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{w} \in \mathbb{R}^n&lt;/script&gt; are the weights for feature vector &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}_i \; \forall i&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\textbf{V} \in \mathbb{R}^{n \times k}&lt;/script&gt; is the weight matrix for feature vector combination &lt;script type=&quot;math/tex&quot;&gt;\textbf{v}_i \textbf{v}_j \; \forall i \; \forall j&lt;/script&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;With three categorical variables: &lt;strong&gt;user&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;u&lt;/script&gt;, &lt;strong&gt;movie (item)&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;, and &lt;strong&gt;time&lt;/strong&gt; &lt;script type=&quot;math/tex&quot;&gt;t&lt;/script&gt;, applying factorization machines model to this data leads to:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + w_{u} + w_{i} + w_{t} + \langle \textbf{v}_u , \textbf{v}_{i} \rangle + \langle \textbf{v}_u , \textbf{v}_{t} \rangle  + \langle \textbf{v}_t , \textbf{v}_{i} \rangle  \tag {8}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;The FM model replaces feature combination weights &lt;script type=&quot;math/tex&quot;&gt;w_{ij}&lt;/script&gt; with factorized interaction parameters between pairs such that &lt;script type=&quot;math/tex&quot;&gt;w_{ij} \approx \langle \textbf{v}_{i}, \textbf{v}_{j} \rangle = \sum_{f=1}^k v_{i,f} v_{j,f}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Any positive semi-definite matrix &lt;script type=&quot;math/tex&quot;&gt;\textbf{W} \in \mathbb{R}^{n \times n}&lt;/script&gt; can be decomposed into &lt;script type=&quot;math/tex&quot;&gt;\textbf{VV}^\top&lt;/script&gt; (e.g., &lt;a href=&quot;https://en.wikipedia.org/wiki/Cholesky_decomposition&quot; target=&quot;_blank&quot;&gt;Cholesky Decomposition&lt;/a&gt;). The FM model can express any pairwise interaction matrix &lt;script type=&quot;math/tex&quot;&gt;\textbf{W} = \textbf{VV}^\top&lt;/script&gt; provided that the &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; chosen is reasonably large enough. &lt;script type=&quot;math/tex&quot;&gt;\textbf{V} \in \mathbb{R}^k&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;k \ll n&lt;/script&gt; is a hyper-parameter that defines the rank of the factorization.&lt;/p&gt;
+
+&lt;p&gt;The problem of sparsity nonetheless implies that the &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; chosen should be small as there is not enough data to estimate complex interactions &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}&lt;/script&gt;. Unlike in polynomial regression we cannot use the full matrix &lt;script type=&quot;math/tex&quot;&gt;\textbf{W}&lt;/script&gt; to model interactions.&lt;/p&gt;
+
+&lt;p&gt;FMs learn &lt;script type=&quot;math/tex&quot;&gt;\textbf{W} \in \mathbb{R}^{n \times n}&lt;/script&gt; in factorized form hence the number of parameters to be estimated is reduced from &lt;script type=&quot;math/tex&quot;&gt;n^2&lt;/script&gt; to &lt;script type=&quot;math/tex&quot;&gt;n \times k&lt;/script&gt; since &lt;script type=&quot;math/tex&quot;&gt;k \ll n&lt;/script&gt;. This reduces overfitting and produces improved interaction matrices leading to better prediction under sparsity.&lt;/p&gt;
+
+&lt;p&gt;The FM model equation in Eq. &lt;script type=&quot;math/tex&quot;&gt;7&lt;/script&gt; now requires &lt;script type=&quot;math/tex&quot;&gt;O(kn^2)&lt;/script&gt; because all pairwise interactions have to be computed. This is an increase over the &lt;script type=&quot;math/tex&quot;&gt;O(n^2)&lt;/script&gt; required in the polynomial regression implementation in Eq. &lt;script type=&quot;math/tex&quot;&gt;3&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;With some reformulation however, we can reduce the complexity from &lt;script type=&quot;math/tex&quot;&gt;O(kn^2)&lt;/script&gt; to a linear time complexity &lt;script type=&quot;math/tex&quot;&gt;O(kn)&lt;/script&gt; as shown below:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+&amp; \sum_{i=1}^n \sum_{j=i+1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_{i} x_{j} \\
+&amp;= \frac{1}{2} \sum_{i=1}^n \sum_{j=1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_{i} x_{j} - \frac{1}{2} \sum_{i=1}^n \langle \textbf{v}_i , \textbf{v}_{i} \rangle x_{i} x_{i} \tag {A}  \\
+&amp;= \overbrace{ \frac{1}{2}\left(\sum_{i=1}^n \sum_{j=1}^n \sum_{f=1}^k v_{i,f} v_{j,f} x_{i} x_{j} \right) }^{\bigstar} - \overbrace{\frac{1}{2}\left( \sum_{i=1}^n \sum_{f=1}^k v_{i,f} v_{i,f} x_{i} x_{i} \right) }^{\bigstar \bigstar}  \tag {B} \\
+&amp;= \frac{1}{2}\left(\sum_{i=1}^n \sum_{j=1}^n \sum_{f=1}^k v_{i,f} v_{j,f} x_{i} x_{j}  -  \sum_{i=1}^n \sum_{f=1}^k v_{i,f} v_{i,f} x_{i} x_{i} \right) \\
+&amp;= \frac{1}{2} \sum_{f=1}^{k} \left( \left(\sum_{i=1}^n v_{i,f}x_{i} \right) \left( \sum_{j=1}^n v_{j,f}x_{j} \right) - \sum_{i=1}^{n} v_{i,f}^2 x_{i}^2 \right) \\
+&amp;= \frac{1}{2} \sum_{f=1}^{k} \left( \left( \sum_{i}^{n} v_{i,f}x_{i} \right)^2  - \sum_{i=1}^{n} v_{i,f}^2 x_{i}^2 \right) \tag {9}
+\end{align}
+\ %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The positive semi-definite matrix &lt;script type=&quot;math/tex&quot;&gt;\mathbf{W} = \mathbf{VV}^\top&lt;/script&gt; which contains the weights of pairwise feature interactions is symmetric. With symmetry, summing over different pairs is the same as summing over all pairs minus the self-interactions (divided by two). This is the reason why the value &lt;script type=&quot;math/tex&quot;&gt;\frac{1}{2}&lt;/script&gt; is introduced as from Eq. &lt;script type=&quot;math/tex&quot;&gt;A&lt;/script&gt; and beyond.&lt;/p&gt;
+
+&lt;p&gt;Let us use some images to expound on this equations even further. For our purposes we will use a &lt;script type=&quot;math/tex&quot;&gt;3 \; \text{by} \; 3&lt;/script&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Symmetric_matrix&quot; target=&quot;_blank&quot;&gt;symmetric matrix&lt;/a&gt; from which we are expecting to end up with &lt;script type=&quot;math/tex&quot;&gt;\sum_{i=1}^n \sum_{j=i+1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_{i} x_{j}&lt;/script&gt; as follows:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/full_fm_matrix.png&quot; alt=&quot;FM Symmetric Matrix&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The first part of the Eq. &lt;script type=&quot;math/tex&quot;&gt;B&lt;/script&gt; marked &lt;script type=&quot;math/tex&quot;&gt;\bigstar&lt;/script&gt; represents a half of the &lt;script type=&quot;math/tex&quot;&gt;3 \; \text{by} \; 3&lt;/script&gt; &lt;a href=&quot;https://en.wikipedia.org/wiki/Symmetric_matrix&quot; target=&quot;_blank&quot;&gt;symmetric matrix&lt;/a&gt; as shown below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/fm_sum_halved.png&quot; alt=&quot;FM Symmetric Matrix&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;To end up with our intended summation &lt;script type=&quot;math/tex&quot;&gt;\sum_{i=1}^n \sum_{j=i+1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_{i} x_{j}&lt;/script&gt;, we will have to reduce the summation shown above with the second part of Eq. &lt;script type=&quot;math/tex&quot;&gt;B&lt;/script&gt; marked &lt;script type=&quot;math/tex&quot;&gt;\bigstar \bigstar&lt;/script&gt; as follows:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/fm_matrix_diagonal.png&quot; alt=&quot;FM Symmetric Matrix&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Substistuting Eq. &lt;script type=&quot;math/tex&quot;&gt;9&lt;/script&gt; in Eq. &lt;script type=&quot;math/tex&quot;&gt;7&lt;/script&gt; we end up with an equation of the form:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} + \frac{1}{2} \sum_{f=1}^{k} \left( \left( \sum_{i}^{n} v_{i,f}x_{i} \right)^2  - \sum_{i=1}^{n} v_{i,f}^2 x_{i}^2 \right)  \tag {10}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;Eq. &lt;script type=&quot;math/tex&quot;&gt;10&lt;/script&gt; now has linear complexity in both &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;n&lt;/script&gt;. The computation complexity here is &lt;script type=&quot;math/tex&quot;&gt;O(kn)&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;For real world problems most of the elements &lt;script type=&quot;math/tex&quot;&gt;x_i&lt;/script&gt; in the feature vector &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; are zeros. With this in mind lets go ahead and define some two quantities here:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;N_z(\mathbf{x})&lt;/script&gt; - the number of non-zero elements in feature vector &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;N_z(\mathbf{X})&lt;/script&gt; - the average number of none-zero elements of all vectors &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x} \in D&lt;/script&gt; (average for the whole dataset &lt;script type=&quot;math/tex&quot;&gt;D&lt;/script&gt; or the number of non-zero elements in the design matrix &lt;script type=&quot;math/tex&quot;&gt;\mathbf{X}&lt;/script&gt;)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;From our previous equations it is easy to see that the numerous zero values in the feature vectors will only leave us with &lt;script type=&quot;math/tex&quot;&gt;N_z(\mathbf{X})&lt;/script&gt; non zero values to work with in the summation (sums over &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;) on Eq. &lt;script type=&quot;math/tex&quot;&gt;10&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;N_z(\mathbf{X}) \ll n&lt;/script&gt;. This means that our complexity will drop down even further from &lt;script type=&quot;math/tex&quot;&gt;O(kn)&lt;/script&gt; to &lt;script type=&quot;math/tex&quot;&gt;O(kN_{z}( \mathbf{X}))&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;This can be seen as a much needed improvement over polynomial regression with the computation complexity of &lt;script type=&quot;math/tex&quot;&gt;O(N_{z}( \mathbf{X})^2)&lt;/script&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;learning-factorization-machines&quot;&gt;Learning Factorization Machines&lt;/h3&gt;
+&lt;p&gt;FMs have a closed model equation which can be computed in linear time. Three learning methods prposed in [2] are stochastic gradient descent(SGD), alternating least squares (ALS) and Markov Chain Monte Carlo (MCMC) inference.&lt;/p&gt;
+
+&lt;p&gt;The model parameters to be learned are &lt;script type=&quot;math/tex&quot;&gt;(w_0, \mathbf{w},&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\mathbf{V} )&lt;/script&gt;. The loss function chosen will depend on the task at hand. For example:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;For regression, we use least square loss: &lt;script type=&quot;math/tex&quot;&gt;l(\hat{y}(\textbf{x}) , y) = (\hat{y}(\textbf{x}) - y)^2&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;For binary classification, we use logit or hinge loss: &lt;script type=&quot;math/tex&quot;&gt;l(\hat{y}(\textbf{x}) , y) = - \ln \sigma(\hat{y}(\textbf{x}){y})&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;\sigma&lt;/script&gt; is the sigmoid/logistic function and &lt;script type=&quot;math/tex&quot;&gt;y \in {-1,1}&lt;/script&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;FMs are prone to overfitting and for this reason &lt;script type=&quot;math/tex&quot;&gt;L2&lt;/script&gt; regularization is applied. Finally, the gradients of the model equation for FMs can be depicted as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial}{\partial\theta}\hat{y}(\textbf{x}) =
+\begin{cases}
+1,  &amp; \text{if $\theta$ is $w_0$} \\
+x_i, &amp; \text{if $\theta$ is $w_i$} \\
+x_i\sum_{j=1}^{n} v_{j,f}x_j - v_{i,f}x_{i}^2 &amp; \text{if $\theta$ is $v_{i,f}$}
+\end{cases}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Notice that the sum &lt;script type=&quot;math/tex&quot;&gt;\sum_{j=1}^{n} v_{j,f}x_j&lt;/script&gt; is independent of &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; and thus can be precomputed. Each gradient can be computed in constant time &lt;script type=&quot;math/tex&quot;&gt;O(1)&lt;/script&gt; and all parameter updates for a case &lt;script type=&quot;math/tex&quot;&gt;(x,y)&lt;/script&gt; can be done in &lt;script type=&quot;math/tex&quot;&gt;O(kn)&lt;/script&gt; or &lt;script type=&quot;math/tex&quot;&gt;O(kN_z(\mathbf{x}))&lt;/script&gt; under sparsity.&lt;/p&gt;
+
+&lt;p&gt;For a total of &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; iterations all the proposed learning algorithms can be said to have a runtime of &lt;script type=&quot;math/tex&quot;&gt;O(kN_z(\mathbf{X})i)&lt;/script&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;conclusions&quot;&gt;Conclusions&lt;/h3&gt;
+&lt;p&gt;FMs also feature some notable improvements over other models including&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;FMs model equation can be computed in linear time leading to fast computation of the model&lt;/li&gt;
+  &lt;li&gt;FM models can work with any real valued feature vector as input unlike other models that work with restricted input data&lt;/li&gt;
+  &lt;li&gt;FMs allow for parameter estimation even under very sparse data&lt;/li&gt;
+  &lt;li&gt;Factorization of parameters allows for estimation of higher order interaction effects even if no observations for the interactions are available&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;references&quot;&gt;References&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;A Factorization Machines by Steffen Rendle - In: Data Mining (ICDM), 2010 IEEE 10th International Conference on. (2010) 995–1000 &lt;a href=&quot;http://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Factorization machines with libfm S Rendle ACM Transactions on Intelligent Systems and Technology (TIST) 3 (3), 57 (2012) &lt;a href=&quot;http://www.csie.ntu.edu.tw/~b97053/paper/Factorization%20Machines%20with%20libFM.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Backpropagation In Convolutional Neural Networks</title>
+   <link href="http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/"/>
+   <updated>2016-09-05T18:36:02+03:00</updated>
+   <id>http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks</id>
+   <content type="html">&lt;h3 id=&quot;introduction&quot;&gt;Introduction&lt;/h3&gt;
+
+&lt;p&gt;Convolutional neural networks (CNNs) are a biologically-inspired variation of the multilayer perceptrons (MLPs). Neurons in CNNs share weights unlike in MLPs where each neuron has a separate weight vector. This sharing of weights ends up reducing the overall number of trainable weights hence introducing sparsity.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/conv.png&quot; alt=&quot;CNN&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Utilizing the weights sharing strategy, neurons are able to perform convolutions on the data with the convolution filter being formed by the weights. This is then followed by a pooling operation which as a form of non-linear down-sampling, progressively reduces the spatial size of the representation thus reducing the amount of computation and parameters in the network.&lt;/p&gt;
+
+&lt;p&gt;Existing between the convolution and the pooling layer is an activation function such as the ReLu layer; a &lt;a href=&quot;http://www.jefkine.com/general/2016/08/24/formulating-the-relu/&quot; target=&quot;_blank&quot;&gt;non-saturating activation&lt;/a&gt; is applied element-wise, i.e. &lt;script type=&quot;math/tex&quot;&gt;f(x) = max(0,x)&lt;/script&gt; thresholding at zero. After several convolutional and pooling layers, the image size (feature map size) is reduced and more complex features are extracted.&lt;/p&gt;
+
+&lt;p&gt;Eventually with a small enough feature map, the contents are squashed into a one dimension vector and fed into a fully-connected MLP for processing. The last layer of this fully-connected MLP seen as the output, is a loss layer which is used to specify how the network training penalizes the deviation between the predicted and true labels.&lt;/p&gt;
+
+&lt;p&gt;Before we begin lets take look at the mathematical definitions of convolution and cross-correlation:&lt;/p&gt;
+
+&lt;h3 id=&quot;cross-correlation&quot;&gt;Cross-correlation&lt;/h3&gt;
+&lt;p&gt;Given an input image &lt;script type=&quot;math/tex&quot;&gt;I&lt;/script&gt; and a filter (kernel) &lt;script type=&quot;math/tex&quot;&gt;K&lt;/script&gt; of dimensions &lt;script type=&quot;math/tex&quot;&gt;k_1 \times k_2&lt;/script&gt;, the cross-correlation operation is given by:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+(I \otimes K)_{ij} &amp;= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} I(i+m, j+n)K(m,n) \tag {1}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;h3 id=&quot;convolution&quot;&gt;Convolution&lt;/h3&gt;
+&lt;p&gt;Given an input image &lt;script type=&quot;math/tex&quot;&gt;I&lt;/script&gt; and a filter (kernel) &lt;script type=&quot;math/tex&quot;&gt;K&lt;/script&gt; of dimensions &lt;script type=&quot;math/tex&quot;&gt;k_1 \times k_2&lt;/script&gt;, the convolution operation is given by:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+(I \ast K)_{ij} &amp;= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} I(i-m, j-n)K(m,n) \tag {2} \\
+&amp;= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} I(i+m, j+n)K(-m,-n) \tag {3}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;From Eq. &lt;script type=&quot;math/tex&quot;&gt;\text{3}&lt;/script&gt; it is easy to see that convolution is the same as cross-correlation with a flipped kernel i.e for a kernel &lt;script type=&quot;math/tex&quot;&gt;K&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;K(-m,-n) == K(m,n)&lt;/script&gt;, convolution &lt;script type=&quot;math/tex&quot;&gt;==&lt;/script&gt; cross-correlation.&lt;/p&gt;
+
+&lt;h3 id=&quot;convolution-neural-networks---cnns&quot;&gt;Convolution Neural Networks - CNNs&lt;/h3&gt;
+
+&lt;p&gt;CNNs consists of convolutional layers which are characterized by an input map &lt;script type=&quot;math/tex&quot;&gt;I&lt;/script&gt;, a bank of filters &lt;script type=&quot;math/tex&quot;&gt;K&lt;/script&gt; and biases &lt;script type=&quot;math/tex&quot;&gt;b&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the case of images, we could have as input an image with height &lt;script type=&quot;math/tex&quot;&gt;H&lt;/script&gt;, width &lt;script type=&quot;math/tex&quot;&gt;W&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;C = 3&lt;/script&gt; channels (red, blue and green) such that &lt;script type=&quot;math/tex&quot;&gt;I \in \mathbb{R}^{H \times W \times C}&lt;/script&gt;. Subsequently for a bank of &lt;script type=&quot;math/tex&quot;&gt;D&lt;/script&gt; filters we have &lt;script type=&quot;math/tex&quot;&gt;K \in \mathbb{R}^{k_1 \times k_2 \times C \times D}&lt;/script&gt; and biases &lt;script type=&quot;math/tex&quot;&gt;b \in \mathbb{R}^{D}&lt;/script&gt;, one for each filter.&lt;/p&gt;
+
+&lt;p&gt;The output from this convolution procedure is as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+(I \ast K)_{ij} &amp;= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} \sum_{c = 1}^{C} K_{m,n,c} \cdot I_{i+m, j+n, c} + b \tag {4}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The convolution operation carried out here is the same as cross-correlation, except that the kernel is “flipped” (horizontally and vertically).&lt;/p&gt;
+
+&lt;p&gt;For the purposes of simplicity we shall use the case where the input image is grayscale i.e single channel &lt;script type=&quot;math/tex&quot;&gt;C = 1&lt;/script&gt;. The Eq. &lt;script type=&quot;math/tex&quot;&gt;\text{4}&lt;/script&gt; will be transformed to:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+(I \ast K)_{ij} &amp;= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} K_{m,n} \cdot I_{i+m, j+n} + b \tag {5}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;h3 id=&quot;notation&quot;&gt;Notation&lt;/h3&gt;
+&lt;p&gt;To help us explore the forward and backpropagation, we shall make use of the following notation:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; is the &lt;script type=&quot;math/tex&quot;&gt;l^{th}&lt;/script&gt; layer where &lt;script type=&quot;math/tex&quot;&gt;l=1&lt;/script&gt; is the first layer and &lt;script type=&quot;math/tex&quot;&gt;l=L&lt;/script&gt; is the last layer.&lt;/li&gt;
+  &lt;li&gt;Input &lt;script type=&quot;math/tex&quot;&gt;x&lt;/script&gt; is of dimension &lt;script type=&quot;math/tex&quot;&gt;H \times W&lt;/script&gt; and has &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; by &lt;script type=&quot;math/tex&quot;&gt;j&lt;/script&gt; as the iterators&lt;/li&gt;
+  &lt;li&gt;Filter or kernel &lt;script type=&quot;math/tex&quot;&gt;w&lt;/script&gt; is of dimension &lt;script type=&quot;math/tex&quot;&gt;k_1 \times k_2&lt;/script&gt; has &lt;script type=&quot;math/tex&quot;&gt;m&lt;/script&gt; by &lt;script type=&quot;math/tex&quot;&gt;n&lt;/script&gt; as the iterators&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;w_{m,n}^l&lt;/script&gt; is the weight matrix connecting neurons of layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; with neurons of layer &lt;script type=&quot;math/tex&quot;&gt;l-1&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;b^l&lt;/script&gt; is the bias unit at layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;x_{i,j}^l&lt;/script&gt; is the convolved input vector at layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; plus the bias represented as
+$$
+\begin{align}
+x_{i,j}^l = \sum_{m}\sum_{n} w_{m,n}^l o_{i + m,j + n}^{l-1} + b^l
+\end{align}
+$$&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;o_{i,j}^l&lt;/script&gt; is the output vector at layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; given by
+$$
+\begin{align}
+o_{i,j}^l = f(x_{i,j}^{l})
+\end{align}
+$$&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;f(\cdot)&lt;/script&gt; is the activation function. Application of the activation layer to the convolved input vector at layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; is given by &lt;script type=&quot;math/tex&quot;&gt;f(x_{i,j}^{l})&lt;/script&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;foward-propagation&quot;&gt;Foward Propagation&lt;/h3&gt;
+
+&lt;p&gt;To perform a convolution operation, the kernel is flipped &lt;script type=&quot;math/tex&quot;&gt;180^\circ&lt;/script&gt; and slid across the input feature map in equal and finite strides. At each location, the product between each element of the kernel and the input input feature map element it overlaps is computed and the results summed up to obtain the output at that current location.&lt;/p&gt;
+
+&lt;p&gt;This procedure is repeated using different kernels to form as many output feature maps as desired. The concept of weight sharing is used as demonstrated in the diagram below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/fCNN.png&quot; alt=&quot;forward CNN&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Units in convolutional layer illustrated above have receptive fields of size 4 in the input feature map and are thus only connected to 4 adjacent neurons in the input layer. This is the idea of &lt;strong&gt;sparse connectivity&lt;/strong&gt; in CNNs where there exists local connectivity pattern between neurons in adjacent layers.&lt;/p&gt;
+
+&lt;p&gt;The color codes of the weights joining the input layer to the convolutional layer show how the kernel weights are distributed (shared) amongst neurons in the adjacent layers. Weights of the same color are constrained to be identical.&lt;/p&gt;
+
+&lt;p&gt;The convolution process here is usually expressed as a cross-correlation but with a flipped kernel. In the diagram below we illustrate a kernel that has been flipped both horizontally and vertically:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/Flipped.png&quot; alt=&quot;forward flipped&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The convolution equation of the input at layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; is given by:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+x_{i,j}^l &amp;= \text{rot}_{180^\circ} \left\{ w_{m,n}^l \right\} \ast o_{i,j}^{l-1} + b_{i,j}^l \tag {6} \\
+x_{i,j}^l &amp;= \sum_{m} \sum_{n} w_{m,n}^l o_{i+m,j+n}^{l-1} + b_{i,j}^l \tag {7} \\
+o_{i,j}^l &amp;= f(x_{i,j}^l) \tag {8}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;This is illustrated below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/convolution.png&quot; alt=&quot;forward convolution&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;error&quot;&gt;Error&lt;/h3&gt;
+
+&lt;p&gt;For a total of &lt;script type=&quot;math/tex&quot;&gt;P&lt;/script&gt; predictions, the predicted network outputs &lt;script type=&quot;math/tex&quot;&gt;y_p&lt;/script&gt; and their corresponding targeted values &lt;script type=&quot;math/tex&quot;&gt;t_p&lt;/script&gt; the the mean squared error is given by:
+$$
+\begin{align}
+E &amp;amp;=  \frac{1}{2}\sum_{p} \left(t_p - y_p \right)^2 \tag {9}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Learning will be achieved by adjusting the weights such that &lt;script type=&quot;math/tex&quot;&gt;y_p&lt;/script&gt; is as close as possible or equals to corresponding &lt;script type=&quot;math/tex&quot;&gt;t_p&lt;/script&gt;. In the classical backpropagation algorithm, the weights are changed according to the gradient descent direction of an error surface &lt;script type=&quot;math/tex&quot;&gt;E&lt;/script&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;backpropagation&quot;&gt;Backpropagation&lt;/h3&gt;
+
+&lt;p&gt;For backpropagation there are two updates performed, for the weights and the deltas. Lets begin with the weight update.&lt;/p&gt;
+
+&lt;p&gt;We are looking to compute &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial E}{\partial w_{m^{\prime},n^{\prime}}^l}&lt;/script&gt; which can be interpreted as the measurement of how the change in a single pixel &lt;script type=&quot;math/tex&quot;&gt;w_{m^{\prime},n^{\prime}}&lt;/script&gt; in the weight kernel affects the loss function &lt;script type=&quot;math/tex&quot;&gt;E&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/kernelPixelBackprop.png&quot; alt=&quot;kernel pixel affecting backprop&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;During forward propagation, the convolution operation ensures that the yellow pixel &lt;script type=&quot;math/tex&quot;&gt;w_{m^{\prime},n^{\prime}}&lt;/script&gt; in the weight kernel makes a contribution in all the products (between each element of the weight kernel and the input feature map element it overlaps). This means that pixel &lt;script type=&quot;math/tex&quot;&gt;w_{m^{\prime},n^{\prime}}&lt;/script&gt; will eventually affect all the elements in the output feature map.&lt;/p&gt;
+
+&lt;p&gt;Convolution between the input feature map of dimension &lt;script type=&quot;math/tex&quot;&gt;H \times W&lt;/script&gt; and the weight kernel of dimension &lt;script type=&quot;math/tex&quot;&gt;k_1 \times k_2&lt;/script&gt; produces an output feature map of size &lt;script type=&quot;math/tex&quot;&gt;\left( H - k_1 + 1 \right)&lt;/script&gt; by &lt;script type=&quot;math/tex&quot;&gt;\left( W - k_2 + 1 \right)&lt;/script&gt;. The gradient component for the individual weights can be obtained by applying the chain rule in the following way:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial E}{\partial w_{m^{\prime},n^{\prime}}^l} &amp;= \sum_{i=0}^{H-k_1} \sum_{j=0}^{W-k_2} \frac{\partial E}{\partial x_{i,j}^{l}} \frac{\partial x_{i,j}^{l}}{\partial w_{m^{\prime},n^{\prime}}^l} \\
+&amp;= \sum_{i=0}^{H-k_1} \sum_{j=0}^{W-k_2} \delta^{l}_{i,j} \frac{\partial x_{i,j}^{l}}{\partial w_{m^{\prime},n^{\prime}}^l} \tag {10}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;In Eq. &lt;script type=&quot;math/tex&quot;&gt;10 \, \text{,} \, x_{i,j}^{l}&lt;/script&gt; is equivalent to &lt;script type=&quot;math/tex&quot;&gt;\sum_{m} \sum_{n} w_{m,n}^{l}o_{i+m,j+n}^{l-1} + b^l&lt;/script&gt; and expanding this part of the equation gives us:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\frac{\partial x_{i,j}^{l}}{\partial w_{m^{\prime},n^{\prime}}^l} = \frac{\partial}{\partial w_{m^{\prime},n^{\prime}}^l}\left( \sum_{m} \sum_{n} w_{m,n}^{l}o_{i+m, j+n}^{l-1} + b^l \right) \tag {11}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;Further expanding the summations in Eq. &lt;script type=&quot;math/tex&quot;&gt;11&lt;/script&gt; and taking the partial derivatives for all the components results in zero values for all except the components where &lt;script type=&quot;math/tex&quot;&gt;m = m'&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;n = n'&lt;/script&gt; in &lt;script type=&quot;math/tex&quot;&gt;w_{m,n}^{l}o_{i+m,j+n}^{l-1}&lt;/script&gt; as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial x_{i,j}^{l}}{\partial w_{m^{\prime},n^{\prime}}^l} &amp;= \frac{\partial}{\partial w_{m',n'}^l}\left( w_{0,0}^{l} o_{ i + 0, j + 0}^{l-1} + \dots + w_{m',n'}^{l} o_{ i + m^{\prime}, j + n^{\prime}}^{l-1} + \dots + b^l\right) \\
+&amp;= \frac{\partial}{\partial w_{m^{\prime},n^{\prime}}^l}\left( w_{m^{\prime},n^{\prime}}^{l} o_{ i + m^{\prime}, j + n^{\prime}}^{l-1}\right) \\
+&amp;=  o_{i+m^{\prime},j+n^{\prime}}^{l-1} \tag {12}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Substituting Eq. &lt;script type=&quot;math/tex&quot;&gt;12&lt;/script&gt; in Eq. &lt;script type=&quot;math/tex&quot;&gt;10&lt;/script&gt; gives us the following results:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial E}{\partial w_{m',n'}^l} &amp;= \sum_{i=0}^{H-k_1} \sum_{j=0}^{W-k_2} \delta^{l}_{i,j} o_{ i + m^{\prime}, j + n^{\prime}}^{l-1} \tag {13} \\
+&amp;= \text{rot}_{180^\circ} \left\{ \delta^{l}_{i,j} \right\} \ast  o_{m^{\prime},n^{\prime}}^{l-1}  \tag {14}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The dual summation in Eq. &lt;script type=&quot;math/tex&quot;&gt;13&lt;/script&gt; is as a result of weight sharing in the network (same weight kernel is slid over all of the input feature map during convolution). The summations represents a collection of all the gradients &lt;script type=&quot;math/tex&quot;&gt;\delta^{l}_{i,j}&lt;/script&gt; coming from all the outputs in layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Obtaining gradients w.r.t to the filter maps, we have a cross-correlation which is transformed to a convolution by “flipping” the delta matrix &lt;script type=&quot;math/tex&quot;&gt;\delta^{l}_{i,j}&lt;/script&gt; (horizontally and vertically) the same way we flipped the filters during the forward propagation.&lt;/p&gt;
+
+&lt;p&gt;An illustration of the flipped delta matrix is shown below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/deltaFlipped.png&quot; alt=&quot;flipped error matrix&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The diagram below shows gradients &lt;script type=&quot;math/tex&quot;&gt;(\delta_{11}, \delta_{12}, \delta_{21}, \delta_{22})&lt;/script&gt; generated during backpropagation:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/bCNN.png&quot; alt=&quot;backward CNN&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The convolution operation used to obtain the new set of weights as is shown below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/bConvolution.png&quot; alt=&quot;backward convolution&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;During the reconstruction process, the deltas &lt;script type=&quot;math/tex&quot;&gt;(\delta_{11}, \delta_{12}, \delta_{21}, \delta_{22})&lt;/script&gt; are used. These deltas are provided by an equation of the form:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\delta^{l}_{i,j} &amp;= \frac{\partial E}{\partial x_{i,j}^{l}} \tag {15}
+\end{align}
+\ %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;At this point we are looking to compute &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial E}{\partial x_{i^{\prime},j^{\prime}}^l}&lt;/script&gt; which can be interpreted as the measurement of how the change in a single pixel &lt;script type=&quot;math/tex&quot;&gt;x_{i^{\prime},j^{\prime}}&lt;/script&gt; in the input feature map affects the loss function &lt;script type=&quot;math/tex&quot;&gt;E&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/inputPixelBackprop.png&quot; alt=&quot;input pixel affecting backprop&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;From the diagram above, we can see that region in the output affected by pixel &lt;script type=&quot;math/tex&quot;&gt;x_{i^{\prime},j^{\prime}}&lt;/script&gt; from the input is the region in the output bounded by the dashed lines where the top left corner pixel is given by &lt;script type=&quot;math/tex&quot;&gt;\left(i^{\prime}-k_1+1,j^{\prime}-k_2+1 \right)&lt;/script&gt; and the bottom right corner pixel is given by &lt;script type=&quot;math/tex&quot;&gt;\left(i^{\prime},j^{\prime} \right)&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Using chain rule and introducing sums give us the following equation:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial E}{\partial x_{i',j'}^{l}} &amp;= \sum_{i,j \in Q} \frac{\partial E}{\partial x_{Q}^{l+1}}\frac{\partial x_{Q}^{l+1}}{\partial x_{i',j'}^l} \\
+&amp;= \sum_{i,j \in Q} \delta^{l+1}_{Q} \frac{\partial x_{Q}^{l+1}}{\partial x_{i',j'}^l} \tag{16} \\
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;Q&lt;/script&gt; in the summation above represents the output region bounded by dashed lines and is composed of pixels in the output that are affected by the single pixel &lt;script type=&quot;math/tex&quot;&gt;x_{i',j'}&lt;/script&gt; in the input feature map. A more formal way of representing Eq. &lt;script type=&quot;math/tex&quot;&gt;16&lt;/script&gt; is:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial E}{\partial x_{i',j'}^{l}} &amp;= \sum_{m = 0}^{k_1 -1} \sum_{n = 0}^{k_2 -1} \frac{\partial E}{\partial x_{i'-m, j'-n}^{l+1}}\frac{\partial x_{i'-m, j'-n}^{l+1}}{\partial x_{i',j'}^l} \\
+&amp;= \sum_{m = 0}^{k_1 -1} \sum_{n = 0}^{k_2 -1} \delta^{l+1}_{i'-m, j'-n} \frac{\partial x_{i'-m, j'-n}^{l+1}}{\partial x_{i',j'}^l} \tag{17} \\
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;In the region &lt;script type=&quot;math/tex&quot;&gt;Q&lt;/script&gt;, the height ranges from &lt;script type=&quot;math/tex&quot;&gt;i' - 0&lt;/script&gt; to &lt;script type=&quot;math/tex&quot;&gt;i' - (k_1 - 1)&lt;/script&gt; and width &lt;script type=&quot;math/tex&quot;&gt;j' - 0&lt;/script&gt; to &lt;script type=&quot;math/tex&quot;&gt;j' - (k_2 - 1)&lt;/script&gt;. These two can simply be represented by &lt;script type=&quot;math/tex&quot;&gt;i' - m&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;j' - n&lt;/script&gt; in the summation since the iterators &lt;script type=&quot;math/tex&quot;&gt;m&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;n&lt;/script&gt; exists in the following similar ranges from &lt;script type=&quot;math/tex&quot;&gt;0 \leq m \leq k_1 - 1&lt;/script&gt; and  &lt;script type=&quot;math/tex&quot;&gt;0 \leq n \leq k_2 - 1&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;In Eq. &lt;script type=&quot;math/tex&quot;&gt;17 \, \text{,} \, x_{i^{\prime} - m, j^{\prime} - n}^{l+1}&lt;/script&gt; is equivalent to &lt;script type=&quot;math/tex&quot;&gt;w_{m^{\prime},n^{\prime}}^{l+1}o_{i^{\prime} - m + m',j^{\prime} - n + n'}^{l} + b^{l+1}&lt;/script&gt; and expanding this part of the equation gives us:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial x_{i'-m,j'-n}^{l+1}}{\partial x_{i',j'}^l} &amp;= \frac{\partial}{\partial x_{i',j'}^l} \left( \sum_{m'} \sum_{n'} w_{m', n'}^{l+1} o_{i' - m + m',j' - n + n'}^{l} + b^{l+1} \right) \\  
+&amp;= \frac{\partial}{\partial x_{i',j'}^l}\left( \sum_{m'} \sum_{n'} w_{m',n'}^{l+1}f\left(x_{i' - m + m',j' - n + n'}^{l}\right) + b^{l+1} \right) \tag{18}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Further expanding the summation in Eq. &lt;script type=&quot;math/tex&quot;&gt;17&lt;/script&gt; and taking the partial derivatives for all the components results in zero values for all except the components where &lt;script type=&quot;math/tex&quot;&gt;m' = m&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;n' = n&lt;/script&gt; so that &lt;script type=&quot;math/tex&quot;&gt;f\left(x_{i' - m + m',j' - n + n'}^{l}\right)&lt;/script&gt; becomes &lt;script type=&quot;math/tex&quot;&gt;f\left(x_{i',j'}^{l}\right)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;w_{m',n'}^{l+1}&lt;/script&gt; becomes &lt;script type=&quot;math/tex&quot;&gt;w_{m,n}^{l+1}&lt;/script&gt; in the relevant part of the expanded summation as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial x_{i^{\prime} - m,j^{\prime} - n}^{l+1}}{\partial x_{i',j'}^l} &amp;= \frac{\partial}{\partial x_{i',j'}^l}\left( w_{m',n'}^{l+1} f\left(x_{ 0 - m + m', 0 - n + n'}^{l}\right) + \dots + w_{m,n}^{l+1} f\left(x_{i',j'}^{l}\right) + \dots + b^{l+1}\right) \\
+&amp;= \frac{\partial}{\partial x_{i',j'}^l}\left( w_{m,n}^{l+1} f\left(x_{i',j'}^{l} \right) \right) \\
+&amp;= w_{m,n}^{l+1} \frac{\partial}{\partial x_{i',j'}^l} \left( f\left(x_{i',j'}^{l} \right) \right) \\
+&amp;= w_{m,n}^{l+1} f'\left(x_{i',j'}^{l}\right) \tag{19}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Substituting Eq. &lt;script type=&quot;math/tex&quot;&gt;19&lt;/script&gt; in Eq. &lt;script type=&quot;math/tex&quot;&gt;17&lt;/script&gt; gives us the following results:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial E}{\partial x_{i',j'}^{l}} &amp;= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} \delta^{l+1}_{i^{\prime} - m,j^{\prime} - n} w_{m,n}^{l+1} f'\left(x_{i',j'}^{l}\right) \tag{20} \\
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;For backpropagation, we make use of the flipped kernel and as a result we will now have a convolution that is expressed as a cross-correlation with a flipped kernel:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial E}{\partial x_{i',j'}^{l}} &amp;= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} \delta^{l+1}_{i^{\prime} - m,j^{\prime} - n} w_{m,n}^{l+1} f'\left(x_{i',j'}^{l}\right) \\
+&amp; = \text{rot}_{180^\circ} \left\{ \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} \delta^{l+1}_{i^{\prime} + m,j^{\prime} + n} w_{m,n}^{l+1} \right\} f'\left(x_{i',j'}^{l}\right) \tag{21} \\
+&amp;= \delta^{l+1}_{i',j'} \ast \text{rot}_{180^\circ} \left\{ w_{m,n}^{l+1} \right\} f'\left(x_{i',j'}^{l} \right) \tag{22}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;h3 id=&quot;pooling-layer&quot;&gt;Pooling Layer&lt;/h3&gt;
+&lt;p&gt;The function of the pooling layer is to progressively reduce the spatial size of the representation to reduce the amount of parameters and computation in the network, and hence to also control overfitting. No learning takes place on the pooling layers [2].&lt;/p&gt;
+
+&lt;p&gt;Pooling units are obtained using functions like max-pooling, average pooling and even L2-norm pooling. At the pooling layer, forward propagation results in an &lt;script type=&quot;math/tex&quot;&gt;N \times N&lt;/script&gt; pooling block being reduced to a single value - value of the “winning unit”. Backpropagation of the pooling layer then computes the error which is acquired by this single value “winning unit”.&lt;/p&gt;
+
+&lt;p&gt;To keep track of the “winning unit” its index noted during the forward pass and used for gradient routing during backpropagation. Gradient routing is done in the following ways:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Max-pooling&lt;/strong&gt; - the error is just assigned to where it comes from - the “winning unit” because other units in the previous layer’s pooling blocks did not contribute to it hence all the other assigned values of zero&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Average pooling&lt;/strong&gt; - the error is multiplied by &lt;script type=&quot;math/tex&quot;&gt;\frac{1}{N \times N}&lt;/script&gt; and assigned to the whole pooling block (all units get this same value).&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h3&gt;
+&lt;p&gt;Convolutional neural networks employ a weight sharing strategy that leads to a significant reduction in the number of parameters that have to be learned. The presence of larger receptive field sizes of neurons in successive convolutional layers coupled with the presence of pooling layers also lead to translation invariance. As we have observed the derivations of forward and backward propagations will differ depending on what layer we are propagating through.&lt;/p&gt;
+
+&lt;h3 id=&quot;references&quot;&gt;References&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;Dumoulin, Vincent, and Francesco Visin. “A guide to convolution arithmetic for deep learning.” stat 1050 (2016): 23. &lt;a href=&quot;https://arxiv.org/pdf/1603.07285.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;LeCun, Y., Boser, B., Denker, J.S., Henderson, D., Howard, R.E., Hubbard, W.,Jackel, L.D.: Backpropagation applied to handwritten zip code recognition. Neural computation 1(4), 541–551 (1989)&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Convolutional_neural_network&quot; target=&quot;_blank&quot;&gt;Wikipedia&lt;/a&gt; page on Convolutional neural network&lt;/li&gt;
+  &lt;li&gt;Convolutional Neural Networks (LeNet) &lt;a href=&quot;http://deeplearning.net/tutorial/lenet.html&quot; target=&quot;_blank&quot;&gt;deeplearning.net&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Convolutional Neural Networks &lt;a href=&quot;http://ufldl.stanford.edu/tutorial/supervised/ConvolutionalNeuralNetwork/&quot; target=&quot;_blank&quot;&gt;UFLDL Tutorial&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Formulating The ReLu</title>
+   <link href="http://www.jefkine.com/general/2016/08/24/formulating-the-relu/"/>
+   <updated>2016-08-24T16:36:02+03:00</updated>
+   <id>http://www.jefkine.com/general/2016/08/24/formulating-the-relu</id>
+   <content type="html">&lt;div class=&quot;message&quot;&gt;
+   &lt;strong&gt;Rectified Linear Function (ReL):&lt;/strong&gt; In this article we take a critical review of the rectified linear activation function and its formulation as derived from the sigmoid activation function.
+&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/ReLU-Big.png&quot; alt=&quot;ReLu&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;rel-definition&quot;&gt;ReL Definition&lt;/h3&gt;
+
+&lt;p&gt;The Rectified Linear Function (ReL) is a max function given by &lt;script type=&quot;math/tex&quot;&gt;f(x) = max(0,x)&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;x&lt;/script&gt; is the input. A more generic form of the ReL Function as used in neural networks can be put together as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+f(x_i) =
+\begin{cases}
+x_i,  &amp; \text{if} \, x_i \gt 0 \\
+a_ix_i, &amp; \text{if} \, x_i \le 0
+\end{cases} \tag {1}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;In Eqn. &lt;script type=&quot;math/tex&quot;&gt;(1)&lt;/script&gt; above, &lt;script type=&quot;math/tex&quot;&gt;x_i&lt;/script&gt; is the input of the nonlinear activation &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; on the &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;th channel, and &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; is the coefficient controlling the slope of the negative part. &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; in &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; indicates that we allow the nonlinear activation to vary on different channels.&lt;/p&gt;
+
+&lt;p&gt;The variations of rectified linear (ReL) take the following forms:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;strong&gt;ReLu&lt;/strong&gt;: obtained when &lt;script type=&quot;math/tex&quot;&gt;a_i = 0&lt;/script&gt;. The resultant activation function is of the form &lt;script type=&quot;math/tex&quot;&gt;f(x_i) = max(0,x_i)&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;PReLu&lt;/strong&gt;:  Parametric ReLu - obtained when &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; is a learnable parameter. The resultant activation function is of the form &lt;script type=&quot;math/tex&quot;&gt;f(x_i) = max(0,x_i) + a_i min(0,x_i)&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;LReLu&lt;/strong&gt;: Leaky ReLu - obtained when &lt;script type=&quot;math/tex&quot;&gt;a_i = 0.01&lt;/script&gt; i.e when &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; is a small and fixed value [1]. The resultant activation function is of the form &lt;script type=&quot;math/tex&quot;&gt;f(x_i) = max(0,x_i) + 0.01 min(0,x_i)&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;RReLu&lt;/strong&gt;: Randomized Leaky ReLu - the randomized version of leaky ReLu, obtained when &lt;script type=&quot;math/tex&quot;&gt;a_{ji}&lt;/script&gt; is a random number
+sampled from a uniform distribution &lt;script type=&quot;math/tex&quot;&gt;U(l,u)&lt;/script&gt; i.e &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+a_{ji} \, U \sim (l, u); \, l &lt; u \, \text{and} \, l, u \in [0; 1) %]]&gt;&lt;/script&gt;. See [2].&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;from-sigmoid-to-relu&quot;&gt;From Sigmoid To ReLu&lt;/h3&gt;
+&lt;p&gt;A sigmoid function is a special case of the logistic function which is given by &lt;script type=&quot;math/tex&quot;&gt;f(x) = 1/\left(1+e^{-x}\right)&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;x&lt;/script&gt; is the input and it’s output boundaries are &lt;script type=&quot;math/tex&quot;&gt;(0,1)&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/sigmoid.png&quot; alt=&quot;sigmoid&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Take an in-finite number of copies of sigmoid units, all having the same incoming and outgoing weights &lt;script type=&quot;math/tex&quot;&gt;\mathbf{w}&lt;/script&gt; and the same adaptive bias &lt;script type=&quot;math/tex&quot;&gt;b&lt;/script&gt;. Let each copy have a different, fixed offset to the bias.&lt;/p&gt;
+
+&lt;p&gt;With offsets that are of the form &lt;script type=&quot;math/tex&quot;&gt;0.5, 1.5, 2.5, 3.5, \dotsb&lt;/script&gt;, we obtain a set of sigmoids units with different biases commonly referred to as stepped sigmoid units (SSU). This set can be illustrated by the diagram below:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/offset-sigmoids.png&quot; alt=&quot;offset sigmoids&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The illustration above represents a set of feature detectors with potentially higher threshold. Given all have the same incoming and outgoing weights, we would then like to know how many will turn on given some input. This translates to the same as finding the sum of the logistic of all these stepped sigmoid units (SSU).&lt;/p&gt;
+
+&lt;p&gt;The sum of the probabilities of the copies is extremely close to &lt;script type=&quot;math/tex&quot;&gt;\log{(1 + e^x)}&lt;/script&gt; i.e.
+$$
+\begin{align}
+\sum_{n=1}^{\infty} \text{logistic} \, (x + 0.5 - n) \approx \log{(1 + e^x)} \tag {2}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Actually if you take the limits of the sum &lt;script type=&quot;math/tex&quot;&gt;\sum_{n=1}^{\infty} \text{logistic} \, (x + 0.5 - n)&lt;/script&gt; and make it an intergral, it turns out to be exactly &lt;script type=&quot;math/tex&quot;&gt;\log{(1 + e^x)}&lt;/script&gt;. See &lt;a href=&quot;http://mathworld.wolfram.com/SigmoidFunction.html&quot; target=&quot;_blank&quot;&gt;Wolfram&lt;/a&gt; for more info.&lt;/p&gt;
+
+&lt;p&gt;Now we know that &lt;script type=&quot;math/tex&quot;&gt;\log{(1 + e^x)}&lt;/script&gt; is behaving like a collection of logistics but more powerful than just one logistic as it does not saturate at the top and has a more dynamic range.&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\log{(1 + e^x)}&lt;/script&gt; is known as the &lt;strong&gt;softplus function&lt;/strong&gt; and can be approximated by &lt;strong&gt;max function (or hard max)&lt;/strong&gt; i.e &lt;script type=&quot;math/tex&quot;&gt;\text{max}(0, x)&lt;/script&gt;. The max function is commonly known as &lt;strong&gt;Rectified Linear Function (ReL)&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the illustration below the blue curve represents the softplus while the red represents the ReLu.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/softplus.png&quot; alt=&quot;softplus&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;h3 id=&quot;advantages-of-relu&quot;&gt;Advantages of ReLu&lt;/h3&gt;
+&lt;p&gt;ReLu (Rectified Linear Units) have recently become an alternative activation function to the sigmoid function in neural networks and below are some of the related advantages:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;ReLu activations used as the activation function induce sparsity in the hidden units. Inputs into the activation function of values less than or equal to &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;, results in an output value of &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;. Sparse representations are considered more valuable.&lt;/li&gt;
+  &lt;li&gt;ReLu activations do not face gradient vanishing problem as with sigmoid and tanh function.&lt;/li&gt;
+  &lt;li&gt;ReLu activations do not require any exponential computation (such as those required in sigmoid or tanh activations). This ensures faster training than sigmoids due to less numerical computation.&lt;/li&gt;
+  &lt;li&gt;ReLu activations overfit more easily than sigmoids, this sets them up nicely to be used in combination with dropout, a technique to avoid overfitting.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;references&quot;&gt;References&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;A. L. Maas, A. Y. Hannun, and A. Y. Ng. “Rectifier nonlinearities improve neural network acoustic models.” In ICML, 2013. &lt;a href=&quot;https://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Xu, Bing, et al. “Empirical Evaluation of Rectified Activations in Convolution Network.” &lt;a href=&quot;http://arxiv.org/pdf/1505.00853v2.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Nair, Vinod, and Geoffrey E. Hinton. “Rectified linear units improve restricted boltzmann machines.” Proceedings of the 27th International Conference on Machine Learning (ICML-10). 2010.  &lt;a href=&quot;http://www.cs.toronto.edu/~fritz/absps/reluICML.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Initialization Of Deep Networks Case of Rectifiers</title>
+   <link href="http://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/"/>
+   <updated>2016-08-08T16:36:02+03:00</updated>
+   <id>http://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers</id>
+   <content type="html">&lt;div class=&quot;message&quot;&gt;
+   &lt;strong&gt;Mathematics Behind Neural Network Weights Initialization - Part Three: &lt;/strong&gt;
+   In this third of a three part series of posts, we will attempt to go through the weight initialization algorithms as developed by various researchers taking into account influences derived from the evolution of neural network architecture and the activation function in particular.
+&lt;/div&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Recent success in deep networks can be credited to the use of non-saturated activation function Rectified Linear unit (RReLu) which has replaced its saturated counterpart (e.g. sigmoid, tanh). Benefits associated with the ReLu activation function include:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Ability to mitigate the exploding or vanishing gradient problem; this largely due to the fact that for all inputs into the activation function of values grater than &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;, the gradient is always &lt;script type=&quot;math/tex&quot;&gt;1&lt;/script&gt; (constant gradient)&lt;/li&gt;
+  &lt;li&gt;The constant gradient of ReLu activations results in faster learning. This helps expedite convergence of the training procedure yielding better better solutions than sigmoidlike units&lt;/li&gt;
+  &lt;li&gt;Unlike the sigmoidlike units (such as sigmoid or tanh activations) ReLu activations does not involve computing of an an exponent which is a factor that results to a faster training and evaluation times.&lt;/li&gt;
+  &lt;li&gt;Producing sparse representations with true zeros. All inputs into the activation function of values less than or equal to &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;, results in an output value of &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;. Sparse representations are considered more valuable&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Xavier and Bengio (2010) [2] had earlier on proposed the “Xavier” initialization, a method whose derivation was based on the assumption that the activations are linear. This assumption however is invalid for ReLu and PReLu. He, Kaiming, et al. 2015 [1] later on derived a robust initialization method that particularly considers the rectifier nonlinearities.&lt;/p&gt;
+
+&lt;p&gt;In this article we discuss the algorithm put forward by He, Kaiming, et al. 2015 [1].&lt;/p&gt;
+
+&lt;h3 id=&quot;notation&quot;&gt;Notation&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; is the side length of a convolutional kernel. (also the spatial filter size of the layer)&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;c&lt;/script&gt; is the channel number. (also input channel)&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;n&lt;/script&gt; is the number of connections of a response (&lt;script type=&quot;math/tex&quot;&gt;n = k \times k \times c \implies k^2c&lt;/script&gt;)&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}&lt;/script&gt; is the co-located &lt;script type=&quot;math/tex&quot;&gt;k \times k&lt;/script&gt; pixels in &lt;script type=&quot;math/tex&quot;&gt;c&lt;/script&gt; inputs channels. (&lt;script type=&quot;math/tex&quot;&gt;\mathbf{x} = (k^2c) \times 1&lt;/script&gt;)&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;W&lt;/script&gt; is the matrix where &lt;script type=&quot;math/tex&quot;&gt;d&lt;/script&gt; is the total number number of filters. Every row of &lt;script type=&quot;math/tex&quot;&gt;W&lt;/script&gt; i.e &lt;script type=&quot;math/tex&quot;&gt;(d_1,d_2,\dotsb,d_d)&lt;/script&gt; represents the weights of a filter. (&lt;script type=&quot;math/tex&quot;&gt;W = d \times n&lt;/script&gt;)&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\mathbf{b}&lt;/script&gt; is the vector of biases.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\mathbf{y}&lt;/script&gt; is the response pixel of the output map&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; is used to index the layers&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;f(\cdot)&lt;/script&gt; is the activation function&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\mathbf{x} = f(\mathbf{y}_{l-1}) \&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;c = d_{l-1} \&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\mathbf{y}_l = W_l\mathbf{x}_l+\mathbf{b}_l \&lt;/script&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&quot;forward-propagation-case&quot;&gt;Forward Propagation Case&lt;/h3&gt;
+&lt;p&gt;Considerations made here include:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The initialized elements in &lt;script type=&quot;math/tex&quot;&gt;W_l&lt;/script&gt; be mutually independent and share the same distribution.&lt;/li&gt;
+  &lt;li&gt;The elements in &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_l&lt;/script&gt; are mutually independent and share the same distribution.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_l&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;W_l&lt;/script&gt; are independent of each other.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The variance of &lt;script type=&quot;math/tex&quot;&gt;y_l&lt;/script&gt; can be given by:
+$$
+\begin{align}
+Var[y_l] &amp;amp;= n_lVar[w_lx_l], \tag 1
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;where &lt;script type=&quot;math/tex&quot;&gt;y_l, w_l, x_l&lt;/script&gt; represent random variables of each element in &lt;script type=&quot;math/tex&quot;&gt;\mathbf{y}_l, W_l, \mathbf{x}_l&lt;/script&gt;. Let &lt;script type=&quot;math/tex&quot;&gt;w_l&lt;/script&gt; have a zero mean, then the variance of the product of independent variables gives us:
+$$
+\begin{align}
+Var[y_l] &amp;amp;= n_lVar[w_l]E[x^2_l]. \tag 2
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Lets look at how the Eqn. &lt;script type=&quot;math/tex&quot;&gt;(2)&lt;/script&gt; above is arrived at:-&lt;/p&gt;
+
+&lt;p&gt;For random variables &lt;script type=&quot;math/tex&quot;&gt;\mathbf{x}_l&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;W_l&lt;/script&gt;, independent of each other, we can use basic properties of expectation to show that:
+$$
+\begin{align}
+Var[w_lx_l] &amp;amp;= E[w^2_l]E[x^2_l]  - \overbrace{ \left[ E[x_l]\right]^2 \left[ E[w_l]\right]^2 }^{ \bigstar } , \tag {A}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;From Eqn. &lt;script type=&quot;math/tex&quot;&gt;(2)&lt;/script&gt; above, we let &lt;script type=&quot;math/tex&quot;&gt;w_l&lt;/script&gt; have a zero mean &lt;script type=&quot;math/tex&quot;&gt;\implies E[w_l] = \left[E[w_l]\right]^2 = 0&lt;/script&gt;. This means that in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(A)&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;\bigstar&lt;/script&gt; evaluates to zero. We are then left with:
+$$
+\begin{align}
+Var[w_lx_l] &amp;amp;= E[w^2_l]E[x^2_l], \tag {B}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Using the formula for &lt;a href=&quot;https://en.wikipedia.org/wiki/Variance#Definition&quot; target=&quot;_blank&quot;&gt;variance&lt;/a&gt; &lt;script type=&quot;math/tex&quot;&gt;Var[w_l] = E[w^2_l] -\left[E[w_l]\right]^2&lt;/script&gt; and the fact that &lt;script type=&quot;math/tex&quot;&gt;E[w_l] = 0&lt;/script&gt;  we come to the conclusion that &lt;script type=&quot;math/tex&quot;&gt;Var[w_l] = E[w^2_l]&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;With this conclusion we can replace &lt;script type=&quot;math/tex&quot;&gt;E[w^2_l]&lt;/script&gt; in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(B)&lt;/script&gt; with &lt;script type=&quot;math/tex&quot;&gt;Var[w_l]&lt;/script&gt; to obtain the following Eqn.:
+$$
+\begin{align}
+Var[w_lx_l] &amp;amp;= Var[w_l]E[x^2_l], \tag {C}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;By substituting Eqn. &lt;script type=&quot;math/tex&quot;&gt;(C)&lt;/script&gt; into Eqn. &lt;script type=&quot;math/tex&quot;&gt;(1)&lt;/script&gt; we obtain:
+$$
+\begin{align}
+Var[y_l] &amp;amp;= n_lVar[w_l]E[x^2_l]. \tag 2
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;In Eqn. &lt;script type=&quot;math/tex&quot;&gt;(2)&lt;/script&gt; it is well worth noting that &lt;script type=&quot;math/tex&quot;&gt;E[x^2_l]&lt;/script&gt; is the expectation of the square of &lt;script type=&quot;math/tex&quot;&gt;x_l&lt;/script&gt; and cannot resolve to &lt;script type=&quot;math/tex&quot;&gt;Var[x_l]&lt;/script&gt; i.e &lt;script type=&quot;math/tex&quot;&gt;E[x^2_l] \neq Var[x_l]&lt;/script&gt; as we did above for &lt;script type=&quot;math/tex&quot;&gt;w_l&lt;/script&gt; unless &lt;script type=&quot;math/tex&quot;&gt;x_l&lt;/script&gt; has zero mean.&lt;/p&gt;
+
+&lt;p&gt;The effect of ReLu activation is such that &lt;script type=&quot;math/tex&quot;&gt;x_l = max(0, y_{l-1})&lt;/script&gt; and thus it does not have zero mean. For this reason the conclusion here is different compared to the initialization style in [2].&lt;/p&gt;
+
+&lt;p&gt;We can also observe here that despite the mean of &lt;script type=&quot;math/tex&quot;&gt;x_l&lt;/script&gt; i.e &lt;script type=&quot;math/tex&quot;&gt;E[x_l]&lt;/script&gt; being non zero, the product of the two means &lt;script type=&quot;math/tex&quot;&gt;E[x_l]&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;E[w_l]&lt;/script&gt; will lead to a zero mean since &lt;script type=&quot;math/tex&quot;&gt;E[w_l] = 0&lt;/script&gt; as shown in the Eqn. below:
+$$
+\begin{align}
+E[y_l] &amp;amp;= E[w_lx_l] = E[x_l]E[w_l] = 0.
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;If we let &lt;script type=&quot;math/tex&quot;&gt;w_{l-1}&lt;/script&gt; have a symmetric distribution around zero and &lt;script type=&quot;math/tex&quot;&gt;b_{l-1} = 0&lt;/script&gt;, then from our observation above &lt;script type=&quot;math/tex&quot;&gt;y_{l-1}&lt;/script&gt; has zero mean and a symmetric distribution around zero. This leads to &lt;script type=&quot;math/tex&quot;&gt;E[x^2_l] = \frac{1}{2}Var[y_{l-1}]&lt;/script&gt; when &lt;script type=&quot;math/tex&quot;&gt;f(\cdot)&lt;/script&gt; is ReLu. Putting this in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(2)&lt;/script&gt;, we obtain:
+$$
+\begin{align}
+Var[y_l] &amp;amp;= n_lVar[w_l]\frac{1}{2}Var[y_{l-1}]. \tag 3
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;With &lt;script type=&quot;math/tex&quot;&gt;L&lt;/script&gt; layers put together, we have:
+$$
+\begin{align}
+Var[y_L] &amp;amp;= Var[y_1]\left( \prod_{l=1}^L \frac{1}{2}n_lVar[w_l] \right). \tag 4
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;The product in Eqn. &lt;script type=&quot;math/tex&quot;&gt;\mathbf{(4)}&lt;/script&gt; is key to the initialization design.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Lets take some time to explain the effect of ReLu activation as seen in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(3)&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/relus.png&quot; alt=&quot;ReLu Family&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;For the family of rectified linear (ReL) shown illustrated in the diagram above, we have a generic activation function defined as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+f(y_i) =
+\begin{cases}
+y_i,  &amp; \text{if} \, y_i \gt 0 \\
+a_iy_i, &amp; \text{if} \, y_i \le 0
+\end{cases} \tag {5}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;In the activation function &lt;script type=&quot;math/tex&quot;&gt;(5)&lt;/script&gt; above, &lt;script type=&quot;math/tex&quot;&gt;y_i&lt;/script&gt; is the input of the nonlinear activation &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; on the &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;th channel, and &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; is the coefficient controlling the slope of the negative part. &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; in &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; indicates that we allow the nonlinear activation to vary on different channels.&lt;/p&gt;
+
+&lt;p&gt;The variations of rectified linear (ReL) take the following forms:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;&lt;strong&gt;ReLu&lt;/strong&gt;: obtained when &lt;script type=&quot;math/tex&quot;&gt;a_i = 0&lt;/script&gt;. The resultant activation function is of the form &lt;script type=&quot;math/tex&quot;&gt;f(y_i) = max(0,y_i)&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;PReLu&lt;/strong&gt;:  Parametric ReLu - obtained when &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; is a learnable parameter. The resultant activation function is of the form &lt;script type=&quot;math/tex&quot;&gt;f(y_i) = max(0,y_i) + a_i min(0,y_i)&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;LReLu&lt;/strong&gt;: Leaky ReLu - obtained when &lt;script type=&quot;math/tex&quot;&gt;a_i = 0.01&lt;/script&gt; i.e when &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; is a small and fixed value [3]. The resultant activation function is of the form &lt;script type=&quot;math/tex&quot;&gt;f(y_i) = max(0,y_i) + 0.01 min(0,y_i)&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;RReLu&lt;/strong&gt;: Randomized Leaky ReLu - the randomized version of leaky ReLu, obtained when &lt;script type=&quot;math/tex&quot;&gt;a_{ji}&lt;/script&gt; is a random number
+sampled from a uniform distribution &lt;script type=&quot;math/tex&quot;&gt;U(l,u)&lt;/script&gt; i.e &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+a_{ji} \, U \sim (l, u); \, l &lt; u \, \text{and} \, l, u \in [0; 1) %]]&gt;&lt;/script&gt;. See [4].&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Rectifier activation function is simply a threshold at zero hence allowing the network to easily obtain sparse representations. For example, after uniform initialization of the weights, around &lt;script type=&quot;math/tex&quot;&gt;50\%&lt;/script&gt; of hidden units continuous output values are real zeros, and this fraction can easily increase with sparsity-inducing regularization [5].&lt;/p&gt;
+
+&lt;p&gt;Take signal &lt;script type=&quot;math/tex&quot;&gt;y_i = W_ix+b,&lt;/script&gt; (visualize the signal represented on a bi-dimensional space &lt;script type=&quot;math/tex&quot;&gt;y_i \in \mathbb{R}^2&lt;/script&gt;). Applying the rectifier activation function to this signal i.e &lt;script type=&quot;math/tex&quot;&gt;f(y_i)&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; is ReLu results in a scenario where signals existing in regions where &lt;script type=&quot;math/tex&quot;&gt;y_i \lt 0&lt;/script&gt; are squashed to &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;, while those existing in regions where &lt;script type=&quot;math/tex&quot;&gt;y_i \gt 0&lt;/script&gt; remain unchanged.&lt;/p&gt;
+
+&lt;p&gt;The ReLu effect results in &lt;em&gt;“aggressive data compression”&lt;/em&gt; where information is lost (replaced by real zeros values). A remedy for this would be the PReLu and LReLu implementations which provides an axle shift that adds a slope &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; to the negative section ensuring from the data some information is retained rather than reduced to zero. Both PReLu and LReLu represented by variations of &lt;script type=&quot;math/tex&quot;&gt;f(y_i) = max(0,y_i) + a_i min(0,y_i)&lt;/script&gt;, make use of the factor &lt;script type=&quot;math/tex&quot;&gt;a_i&lt;/script&gt; which serves as the component used to retain some information.&lt;/p&gt;
+
+&lt;p&gt;Using ReLu activation function function therefore, only the positive half axis values are obtained hence:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{align}
+E[x^2_l] &amp;= \frac{1}{2}Var[y_{l-1}] \tag 6
+\end{align}
+\ %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;Putting this in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(2)&lt;/script&gt;, we obtain our Eqn. &lt;script type=&quot;math/tex&quot;&gt;(3)&lt;/script&gt; as above:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var[y_l] &amp;= n_lVar[w_l]\frac{1}{2}Var[y_{l-1}] \tag {3a} \\
+&amp;= \frac{1}{2}n_lVar[w_l]Var[y_{l-1}] \tag {3b}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Note that a proper initialization method should avoid reducing and magnifying the magnitudes of input signals exponentially. For this reason we expect the product in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(4)&lt;/script&gt; to take a proper scalar (e.g., 1). This leads to:
+$$
+\begin{align}
+\frac{1}{2}n_lVar[w_l] &amp;amp;= 1, \quad \forall l \tag 7
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;From Eqn. &lt;script type=&quot;math/tex&quot;&gt;(7)&lt;/script&gt; above, we can conclude that:
+$$
+\begin{align}
+Var[w_l] = \frac{2}{n_l} \implies \text{standard deviation (std)} = \sqrt{\frac{2}{n_l}}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;The initialization according to [1] is a zero-mean Gaussian distribution whose standard deviation (std) is &lt;script type=&quot;math/tex&quot;&gt;\sqrt{2/n_l}&lt;/script&gt;. The bias is initialized to zero. The initialization distribution therefore is of the form:
+$$
+\begin{align}
+W_l \sim \mathcal N \left({\Large 0}, \sqrt{\frac{2}{n_l}} \right) \,\text{and} \,\mathbf{b} = 0.
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;From Eqn. &lt;script type=&quot;math/tex&quot;&gt;(4)&lt;/script&gt;, we can observe that for the first layer &lt;script type=&quot;math/tex&quot;&gt;(l = 1)&lt;/script&gt;, the variance of weights is given by &lt;script type=&quot;math/tex&quot;&gt;n_lVar[w_l] = 1&lt;/script&gt; because there is no ReLu applied on the input signal. However, the factor of a single layer does not make the overall product exponentially large or small and as such we adopt Eqn. &lt;script type=&quot;math/tex&quot;&gt;(7)&lt;/script&gt; in the first layer for simplicity.&lt;/p&gt;
+
+&lt;h3 id=&quot;backward-propagation-case&quot;&gt;Backward Propagation Case&lt;/h3&gt;
+&lt;p&gt;For back-propagation, the gradient of the conv-layer is computed by:
+$$
+\begin{align}
+\Delta{\mathbf{x}_l} &amp;amp;= W_l\Delta{\mathbf{y}_l}. \tag{8}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;h3 id=&quot;notation-1&quot;&gt;Notation&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\Delta{\mathbf{x}_l}&lt;/script&gt; is the gradient &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \epsilon}{\partial \mathbf{x}}&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\Delta{\mathbf{y}_l}&lt;/script&gt; is the gradient &lt;script type=&quot;math/tex&quot;&gt;\frac{\partial \epsilon}{\partial \mathbf{y}}&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\Delta{\mathbf{y}_l}&lt;/script&gt; is represented by &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; by &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; pixels in &lt;script type=&quot;math/tex&quot;&gt;d&lt;/script&gt; channels and is thus reshaped into &lt;script type=&quot;math/tex&quot;&gt;k^2d&lt;/script&gt; by &lt;script type=&quot;math/tex&quot;&gt;1&lt;/script&gt; vector i.e &lt;script type=&quot;math/tex&quot;&gt;\Delta{\mathbf{y}_l} = k^2d \times 1&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\hat{n}&lt;/script&gt; is given by &lt;script type=&quot;math/tex&quot;&gt;k^2d&lt;/script&gt; also note that &lt;script type=&quot;math/tex&quot;&gt;\hat{n} \neq n&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\hat{W}&lt;/script&gt; is a &lt;script type=&quot;math/tex&quot;&gt;c \text{-by-} n&lt;/script&gt; matrix where filters are arranged in the back-propagation way. Also &lt;script type=&quot;math/tex&quot;&gt;\hat{W}&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;W&lt;/script&gt; can be reshaped from each other.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;\Delta{\mathbf{x}}&lt;/script&gt; is a &lt;script type=&quot;math/tex&quot;&gt;c \text{-by-} 1&lt;/script&gt; vector representing the gradient at a pixel of this layer.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Assumptions made here include:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Assume that &lt;script type=&quot;math/tex&quot;&gt;w_l&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\Delta{y_l}&lt;/script&gt; are independent of each other then &lt;script type=&quot;math/tex&quot;&gt;\Delta{x_l}&lt;/script&gt; has zero mean for all &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt;, when &lt;script type=&quot;math/tex&quot;&gt;w_l&lt;/script&gt; is initialized by a symmetric distribution around zero.&lt;/li&gt;
+  &lt;li&gt;Assume that &lt;script type=&quot;math/tex&quot;&gt;f'(y_l)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\Delta{x_{l+1}}&lt;/script&gt; are independent of each other&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;In back-propagation we have &lt;script type=&quot;math/tex&quot;&gt;\Delta{\mathbf{y}_l} = f'(y_l)\Delta{x_{l+1}}&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;f'&lt;/script&gt; is the derivative of &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt;. For the ReLu case &lt;script type=&quot;math/tex&quot;&gt;f'(y_l)&lt;/script&gt; is either zero or one with their probabilities being equal i.e &lt;script type=&quot;math/tex&quot;&gt;\Pr{(0)} = \frac{1}{2}&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\Pr{(1)} = \frac{1}{2}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Lets build on from some definition here; for a discrete case, the expected value of a discrete random variable, X, is found by multiplying each X-value by its probability and then summing over all values of the random variable.  That is, if X is discrete,
+$$
+\begin{align}
+E[X] &amp;amp;= \sum_{\text{all}\,x} xp(x)
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;The expectation of &lt;script type=&quot;math/tex&quot;&gt;f'(y_l)&lt;/script&gt; then:
+$$
+\begin{align}
+E[f’(y_l)] &amp;amp;= (0)\frac{1}{2} + (1)\frac{1}{2} = \frac{1}{2} \tag{9}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;With the independence of &lt;script type=&quot;math/tex&quot;&gt;f'(y_l)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\Delta{x_{l+1}}&lt;/script&gt;, we can show that:
+The expectation of &lt;script type=&quot;math/tex&quot;&gt;f'(y_l)&lt;/script&gt; then:
+$$
+\begin{align}
+E[\Delta{y_{l}}] &amp;amp;= E[f’(y_l)\Delta{x_{l+1}}] = E[f’(y_l)]E[\Delta{x_{l+1}}] \tag{10}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Substituting results in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(9)&lt;/script&gt; into Eqn. &lt;script type=&quot;math/tex&quot;&gt;(10)&lt;/script&gt; we obtain:
+$$
+\begin{align}
+E[\Delta{y_{l}}] &amp;amp;= \frac{1}{2}E[\Delta{x_{l+1}}] = 0 \tag{11}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;In Eqn. &lt;script type=&quot;math/tex&quot;&gt;(10)&lt;/script&gt; &lt;script type=&quot;math/tex&quot;&gt;\Delta{x_l}&lt;/script&gt; has zero mean for all &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; which gives us the result zero. With this we can show that &lt;script type=&quot;math/tex&quot;&gt;E[(\Delta{y_{l}})^2] = Var[\Delta{y_{l}}]&lt;/script&gt; using the formula of variance as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var[\Delta{y_{l}}] &amp;= E[(\Delta{y_{l}})^2] - [E[\Delta{y_{l}}]]^2 \\
+&amp;= E[(\Delta{y_{l}})^2] - 0 \\
+&amp;= E[(\Delta{y_{l}})^2]
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Again with the assumption that &lt;script type=&quot;math/tex&quot;&gt;\Delta{x_l}&lt;/script&gt; has zero mean for all &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt;, we show can that the variance of product of two independent variables &lt;script type=&quot;math/tex&quot;&gt;f'(y_l)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\Delta{x_{l+1}}&lt;/script&gt; to be&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var[\Delta{y_{l}}] &amp;= Var[f'(y_l)\Delta{x_{l+1}}] \\
+&amp;= E[(f'(y_l))^2]E[(\Delta{x_{l+1}})^2] - [E[f'(y_l)]]^2[E[\Delta{x_{l+1}}]]^2 \\
+&amp;= E[(f'(y_l))^2]E[(\Delta{x_{l+1}})^2] - 0 \\
+&amp;= E[(f'(y_l))^2]E[(\Delta{x_{l+1}})^2]  \tag{12}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;From the values of &lt;script type=&quot;math/tex&quot;&gt;f'(y_l) \in \lbrace 0,1 \rbrace&lt;/script&gt; we can observe that &lt;script type=&quot;math/tex&quot;&gt;1^2 = 1&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;0^2 = 0&lt;/script&gt; meaning &lt;script type=&quot;math/tex&quot;&gt;f'(y_l) = [f'(y_l)]^2&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;This means that &lt;script type=&quot;math/tex&quot;&gt;E[f'(y_l)] = E[(f'(y_l))^2] = \frac{1}{2}&lt;/script&gt;. Using this result in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(12)&lt;/script&gt; we obtain:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var[\Delta{y_{l}}] &amp;=  E[(f'(y_l))^2]E[(\Delta{x_{l+1}})^2] \\
+&amp;= \frac{1}{2}E[(\Delta{x_{l+1}})^2] \tag{13}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Using the formula for variance and yet again the assumption that &lt;script type=&quot;math/tex&quot;&gt;\Delta{x_l}&lt;/script&gt; has zero mean for all &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt;, we show can that &lt;script type=&quot;math/tex&quot;&gt;Var[\Delta{x_{l+1}}] = E[(\Delta{x_{l+1}})^2]&lt;/script&gt;:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var[\Delta{x_{l+1}}] &amp;= E[(\Delta{x_{l+1}})^2] - [E[\Delta{x_{l+1}}]]^2 \\
+&amp;= E[(\Delta{x_{l+1}})^2] - 0 \\
+&amp;= E[(\Delta{x_{l+1}})^2] \tag{14}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Substituting this result in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(13)&lt;/script&gt; we obtain:
+$$
+\begin{align}
+E[(\Delta{y_{l}})^2] &amp;amp;= Var[\Delta{y_{l}}] = \frac{1}{2}E[(\Delta{x_{l+1}})^2] \tag{15}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;The variance of Eqn. &lt;script type=&quot;math/tex&quot;&gt;(8)&lt;/script&gt; can be shown to be:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var[\Delta{x_{l+1}}] &amp;= \hat{n}Var[w_l]Var[\Delta{y_{l}}] \\
+&amp;= \frac{1}{2} \hat{n}Var[w_l]Var[\Delta{x_{l+1}}] \tag{16}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The scalar &lt;script type=&quot;math/tex&quot;&gt;1/2&lt;/script&gt; in both Eqn. &lt;script type=&quot;math/tex&quot;&gt;(16)&lt;/script&gt; and Eqn. &lt;script type=&quot;math/tex&quot;&gt;(3)&lt;/script&gt; is the result of ReLu, though the derivations are different. With &lt;script type=&quot;math/tex&quot;&gt;L&lt;/script&gt; layers put together, we have:
+$$
+\begin{align}
+Var[\Delta{x_2}] &amp;amp;= Var[\Delta{x_{L+1}}]\left( \prod_{l=2}^L \frac{1}{2}\hat{n}_lVar[w_l] \right) \tag{17}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Considering a sufficient condition that the gradient is not exponentially large/small:
+$$
+\begin{align}
+\frac{1}{2}\hat{n}_lVar[w_l] &amp;amp;= 1, \quad \forall{l} \tag{18}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;The only difference between Eqn. &lt;script type=&quot;math/tex&quot;&gt;(18)&lt;/script&gt; and Eqn. &lt;script type=&quot;math/tex&quot;&gt;(7)&lt;/script&gt; is that &lt;script type=&quot;math/tex&quot;&gt;\hat{n} = k^2_ld_l&lt;/script&gt; while &lt;script type=&quot;math/tex&quot;&gt;n = k^2_lc_l = k^2_ld_{l-1}&lt;/script&gt;. Eqn. &lt;script type=&quot;math/tex&quot;&gt;(18)&lt;/script&gt; results in a zero-mean Gaussian distribution whose standard deviation (std) is &lt;script type=&quot;math/tex&quot;&gt;\sqrt{2/\hat{n}_l}&lt;/script&gt;. The initialization distribution therefore is of the form:
+$$
+\begin{align}
+W_l \sim \mathcal N \left({\Large 0}, \sqrt{\frac{2}{\hat{n}_l}} \right)
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;For the layer &lt;script type=&quot;math/tex&quot;&gt;(l = 1)&lt;/script&gt;, we need not compute &lt;script type=&quot;math/tex&quot;&gt;\Delta{x}&lt;/script&gt; because it represents the image domain. We adopt Eqn. &lt;script type=&quot;math/tex&quot;&gt;(18)&lt;/script&gt; for the first layer for the same reason as the forward propagation case - the factor of a single layer does not make the overall product exponentially large or small.&lt;/p&gt;
+
+&lt;p&gt;It is noted that use of either Eqn. &lt;script type=&quot;math/tex&quot;&gt;(18)&lt;/script&gt; or Eqn. &lt;script type=&quot;math/tex&quot;&gt;(4)&lt;/script&gt; alone is sufficient. For example, if we use Eqn.&lt;script type=&quot;math/tex&quot;&gt;(18)&lt;/script&gt;, then in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(17)&lt;/script&gt; the product &lt;script type=&quot;math/tex&quot;&gt;\prod_{l=2}^L \frac{1}{2}\hat{n}_lVar[w_l] = 1&lt;/script&gt;, and in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(4)&lt;/script&gt; the product &lt;script type=&quot;math/tex&quot;&gt;\prod_{l=2}^L \frac{1}{2}n_lVar[w_l] = \prod_{l=2}^L n_l/\hat{n} = c_2/d_L&lt;/script&gt;, which is not a diminishing number in common network designs. This means that if the initialization properly scales the backward signal, then this is also the case for the forward signal; and vice versa.&lt;/p&gt;
+
+&lt;p&gt;For initialization in the PReLu case, it is easy to show that Eqn. &lt;script type=&quot;math/tex&quot;&gt;(4)&lt;/script&gt; becomes:
+$$
+\begin{align}
+\frac{1}{2}(1+a^2)n_lVar[w_l] &amp;amp;= 1, \tag {19}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Where &lt;script type=&quot;math/tex&quot;&gt;a&lt;/script&gt; is the initialized value of the coefficients. If &lt;script type=&quot;math/tex&quot;&gt;a = 0&lt;/script&gt;, it becomes the ReLu case; if &lt;script type=&quot;math/tex&quot;&gt;a = 1&lt;/script&gt;, it becomes the linear case; same as [2]. Similarly, Eqn. &lt;script type=&quot;math/tex&quot;&gt;(14)&lt;/script&gt; becomes:
+$$
+\begin{align}
+\frac{1}{2}(1+a^2)\hat{n}_lVar[w_l] &amp;amp;= 1, \tag {20}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;h3 id=&quot;applications&quot;&gt;Applications&lt;/h3&gt;
+&lt;p&gt;The initialization routines derived here, more famously known as &lt;strong&gt;“Kaiming Initialization”&lt;/strong&gt; have been successfully applied in various deep learning libraries. Below we shall look at
+&lt;a href=&quot;https://keras.io/&quot; target=&quot;_blank&quot;&gt;Keras&lt;/a&gt; a minimalist, highly modular neural networks library, written in Python and capable of running on top of either TensorFlow or Theano.&lt;/p&gt;
+
+&lt;p&gt;The initialization routine here is named “he_” following the name of one of the authors Kaiming He [1]. In the code snippet below, &lt;strong&gt;he_normal&lt;/strong&gt; is the implementation of initialization based on Gaussian distribution while  &lt;strong&gt;he_uniform&lt;/strong&gt; is the equivalent implementation of initialization based on Uniform distribution&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;get_fans&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;prod&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:])&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;he_normal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_fans&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sqrt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;2.&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;he_uniform&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_fans&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sqrt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;6.&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uniform&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h3 id=&quot;references&quot;&gt;References&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;He, Kaiming, et al. “Delving deep into rectifiers: Surpassing human-level performance on imagenet classification.” Proceedings of the IEEE International Conference on Computer Vision. 2015. &lt;a href=&quot;https://arxiv.org/pdf/1502.01852v1.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Glorot Xavier, and Yoshua Bengio. “Understanding the difficulty of training deep feedforward neural networks.” Aistats. Vol. 9. 2010. &lt;a href=&quot;http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;A. L. Maas, A. Y. Hannun, and A. Y. Ng. “Rectifier nonlinearities improve neural network acoustic models.” In ICML, 2013. &lt;a href=&quot;https://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Xu, Bing, et al. “Empirical Evaluation of Rectified Activations in Convolution Network.” &lt;a href=&quot;http://arxiv.org/pdf/1505.00853v2.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Glorot, Xavier, Antoine Bordes, and Yoshua Bengio. “Deep Sparse Rectifier Neural Networks.” Aistats. Vol. 15. No. 106. 2011. &lt;a href=&quot;http://jmlr.org/proceedings/papers/v15/glorot11a/glorot11a.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Initialization Of Deep Feedfoward Networks</title>
+   <link href="http://www.jefkine.com/deep/2016/08/01/initialization-of-deep-feedfoward-networks/"/>
+   <updated>2016-08-01T20:36:02+03:00</updated>
+   <id>http://www.jefkine.com/deep/2016/08/01/initialization-of-deep-feedfoward-networks</id>
+   <content type="html">&lt;div class=&quot;message&quot;&gt;
+   &lt;strong&gt;Mathematics Behind Neural Network Weights Initialization - Part Two: &lt;/strong&gt;
+   In this second of a three part series of posts, we will attempt to go through the weight initialization algorithms as developed by various researchers taking into account influences derived from the evolution of neural network architecture and the activation function in particular.
+&lt;/div&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/xavier_initialization.png&quot; alt=&quot;active region&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Deep multi-layered neural networks often require experiments that interrogate different initialization routines, activations and variation of gradients across layers during training. These provide valuable insights into what aspects should be improved to aid faster and successful training.&lt;/p&gt;
+
+&lt;p&gt;For Xavier and Bengio (2010) [1] the objective was to better understand why standard gradient descent from random initializations was performing poorly in deep neural networks. They carried out analysis driven by investigative experiments that monitored activations (watching for saturations of hidden units) and gradients across layers and across training iterations. They evaluated effects on choices of different activation functions (how it might affect saturation) and initialization procedure (with lessons learned from unsupervised pre-training as a form of initialization that already had drastic impact)&lt;/p&gt;
+
+&lt;p&gt;A new initialization scheme that brings substantially faster convergence was proposed. In this article we discuss the algorithm put forward by Xavier and Bengio (2010) [1]&lt;/p&gt;
+
+&lt;h3 id=&quot;gradients-at-initialization&quot;&gt;Gradients at Initialization&lt;/h3&gt;
+&lt;p&gt;Earlier on, Bradley (2009) [2] found that in networks with linear activation at each layer, the variance of the back-propagated gradients decreases as we go backwards in the network. Below we will look at theoretical considerations and a derivation of the &lt;strong&gt;normalized initialization&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;notation&quot;&gt;Notation&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; is the activation function. For the dense artificial neural network, a symmetric activation function &lt;script type=&quot;math/tex&quot;&gt;f&lt;/script&gt; with unit derivative at &lt;script type=&quot;math/tex&quot;&gt;0\,(i.e\, f'(0) = 1)&lt;/script&gt; is chosen. Hyperbolic tangent and softsign are both forms of symmetric activation functions.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;z^i&lt;/script&gt; is the activation vector at layer &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;z^i = f(s^{i-1})&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;s^i&lt;/script&gt; is the argument vector of the activation function at layer &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;s^i = z^{i-1}w^i + b^i&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;w^i&lt;/script&gt; is the weight vector connecting neurons in layer &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; with neurons in layer &lt;script type=&quot;math/tex&quot;&gt;i+1&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;b^i&lt;/script&gt; is the bias vector on layer &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;x&lt;/script&gt; is the network input.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;From the notation above, it is easy to derive the following equations of back-propagation&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial Cost}{\partial s_k^{i}} &amp;= f'(s_k^{i}) \sum_{l\in\text{outs}(k)}(w_{k\rightarrow l}^{i+1}) \frac{\partial Cost}{\partial s_k^{i+1}} \tag {1a} \\
+\frac{\partial Cost}{\partial s_k^{i}} &amp;= f'(s_k^{i})W_{k,\bullet}^{i+1} \frac{\partial Cost}{\partial s_k^{i+1}} \tag {1b} \\
+\frac{\partial Cost}{\partial w_{l,k}^{i}} &amp;= z_l^i\frac{\partial Cost}{\partial s_k^{i}} \tag 2
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The variances will be expressed with respect to the input, output and weight initialization randomness. Considerations made include:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Initialization occurs in a linear regime&lt;/li&gt;
+  &lt;li&gt;Weights are initialized independently&lt;/li&gt;
+  &lt;li&gt;Input feature variances are the same &lt;script type=&quot;math/tex&quot;&gt;( =Var[x])&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;There is no correlation between our input and our weights and both are zero-mean.&lt;/li&gt;
+  &lt;li&gt;All biases have been initialized to zero.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;For the input layer, &lt;script type=&quot;math/tex&quot;&gt;X \in \mathbb{R}^{m \times n}&lt;/script&gt; with &lt;script type=&quot;math/tex&quot;&gt;n&lt;/script&gt; components each from &lt;script type=&quot;math/tex&quot;&gt;m&lt;/script&gt; training samples. Here the neurons are linear with random weights &lt;script type=&quot;math/tex&quot;&gt;W^{(in\rightarrow 1)} \in \mathbb{R}^{m \times a}&lt;/script&gt; outputting &lt;script type=&quot;math/tex&quot;&gt;S^{(1)} \in \mathbb{R}^{n \times a}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;The output &lt;script type=&quot;math/tex&quot;&gt;S^{(1)}&lt;/script&gt; can be shown by the equations below:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+S^{(1)} &amp;= XW^{(in\rightarrow 1)} \\
+S^{(1)}_{ij} =&amp; \sum_{k=1}^m X_{ik}W^{(in\rightarrow 1)}_{kj}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Given &lt;script type=&quot;math/tex&quot;&gt;X&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;W&lt;/script&gt; are independent, we can show that the &lt;a href=&quot;https://en.wikipedia.org/wiki/Variance#Product_of_independent_variables&quot; target=&quot;_blank&quot;&gt;variance of their product&lt;/a&gt; can be given by:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\text{Var}(W_iX_i) &amp;= E[X_i]^2 \text{Var}(W_i) + E[W_i]^2 \text{Var}(X_i) + \text{Var}(W_i)\text{Var}(X_i) \tag {3}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Considering our inputs and weights both have mean &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;, Eqn. &lt;script type=&quot;math/tex&quot;&gt;(3)&lt;/script&gt; simplifies to&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\text{Var}(W_iX_i) &amp;= \text{Var}(W_i)\text{Var}(X_i)
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;X_i&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;W_i&lt;/script&gt; are all independent and identically distributed, &lt;a href=&quot;http://eli.thegreenplace.net/2009/01/07/variance-of-the-sum-of-independent-variables&quot; target=&quot;_blank&quot;&gt;we can therefore show that:&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\text{Var}(\sum_{i=1}^n W_iX_i) &amp;= \text{Var}(W_1X_1 + W_2X_2 + \dotsb + W_n X_n) = n\text{Var}(W_i)\text{Var}(X_i)
+\end{align}
+\ %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;Further, lets now look at two adjacent layers &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;i'&lt;/script&gt;. Here, &lt;script type=&quot;math/tex&quot;&gt;n_i&lt;/script&gt; is used to denote the size of layer layer &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt;. Applying the derivative of the activation function at &lt;script type=&quot;math/tex&quot;&gt;s_k^i&lt;/script&gt; yields a value of approximately one.&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;\begin{align}
+f'(s_k^{i}) \approx 1, \tag {4}
+\end{align}
+\&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;Then using our prior knowledge of independent and identically distributed  &lt;script type=&quot;math/tex&quot;&gt;X_i&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;W_i&lt;/script&gt;, we have.&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var[z^i] &amp;= Var[x] \prod_{i'= 0}^{i-1} n_{i'}Var[W^{i'}] \tag {5}
+\end{align}
+\ %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;Var[W^{i'}]&lt;/script&gt; in Eqn. &lt;script type=&quot;math/tex&quot;&gt;5&lt;/script&gt;, is the shared scalar variance of all weights at layer &lt;script type=&quot;math/tex&quot;&gt;i'&lt;/script&gt;. Taking these observations into consideration, a network with &lt;script type=&quot;math/tex&quot;&gt;d&lt;/script&gt; layers, will have the following Eqns.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var \left[ \frac{\partial Cost}{\partial s^{i}} \right] &amp;= Var \left[ \frac{\partial Cost}{\partial s^{d}} \right] \prod_{i'= i}^{d} n_{i'+1}Var[W^{i'}], \tag {6} \\
+Var \left[ \frac{\partial Cost}{\partial w^{i}} \right] &amp;= \prod_{i'= 0}^{i - 1} n_{i'}Var[W^{i'}] \prod_{i'= i}^{d - 1} n_{i'+1}Var[W^{i'}] \times Var[x] Var \left[ \frac{\partial Cost}{\partial s^{d}} \right].  \tag {7}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;We would then like to steady the variance such there is equality from layer to layer. From a foward-propagation point of view, to keep information flowing we would like that&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\forall (i,i'), \, Var[z^i] &amp;= Var[z^{i'}]. \tag {8}
+\end{align}
+\ %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;From a back-propagation point of view, we would like to have:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\forall (i,i'), \, Var \left[ \frac{\partial Cost}{\partial s^{i}} \right] &amp;= Var \left[ \frac{\partial Cost}{\partial s^{i'}} \right]. \tag {9}
+\end{align}
+\ %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;For Eqns. &lt;script type=&quot;math/tex&quot;&gt;(8)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;(9)&lt;/script&gt; to hold, the shared scalar variances &lt;script type=&quot;math/tex&quot;&gt;n_{i'}Var[W^{i'}]&lt;/script&gt; in Eqn. &lt;script type=&quot;math/tex&quot;&gt;(5)&lt;/script&gt; should be &lt;script type=&quot;math/tex&quot;&gt;1&lt;/script&gt;. This is the same as trying to ensure the variances of the input and output are consistent (realize that the technique used here helps avoid reducing or magnifying the signals exponentially hence mitigating the exploding or vanishing gradient problem):&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\forall (i), \quad n_{i}Var[W^{i}] &amp;= 1 \tag {10a} \\
+\forall (i), \quad Var[W^{i}] &amp;= \frac{1}{n_{i}} \tag {10b} \\
+\forall (i), \quad n_{i+1}Var[W^{i}] &amp;= 1 \tag {11a} \\
+\forall (i), \quad Var[W^{i}] &amp;= \frac{1}{n_{i+1}} \tag {11b} \\
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;As a compromise between the two constraints (representing back-propagation and foward-propagation), we might want to have
+$$
+\begin{align}
+\forall (i), \quad \frac{2}{n_{i} + n_{i+1}} \tag {12}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;In the experimental setting chosen by Xavier and Bengio (2010) [1], the standard initialization weights &lt;script type=&quot;math/tex&quot;&gt;W_{i,j}&lt;/script&gt; at each layer using the commonly used heuristic:
+$$
+\begin{align}
+W_{i,j} \sim U \left[ -\frac{1}{\sqrt n}, \frac{1}{\sqrt n} \right],  \tag {13}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;where &lt;script type=&quot;math/tex&quot;&gt;U \left[ -\theta, \theta \right]&lt;/script&gt; is the uniform distribution in the interval &lt;script type=&quot;math/tex&quot;&gt;\left(-\theta, \theta \right)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;n&lt;/script&gt; is the size of the previous layer (the number of columns of &lt;script type=&quot;math/tex&quot;&gt;W&lt;/script&gt;).&lt;/p&gt;
+
+&lt;p&gt;For uniformly distributed sets of weights &lt;script type=&quot;math/tex&quot;&gt;W \overset{iid}{\sim} U \left[ -\theta, \theta \right]&lt;/script&gt; with zero mean, we can use the formula &lt;script type=&quot;math/tex&quot;&gt;\left\{ x \sim U[a,b] \implies Var[x] = \frac{(b-a)^2}{12} \right\}&lt;/script&gt; for &lt;a href=&quot;http://math.stackexchange.com/questions/728059/prove-variance-in-uniform-distribution-continuous&quot; target=&quot;_blank&quot;&gt;variance of a uniform distribution&lt;/a&gt; to show that:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var[W] &amp;= \frac{(2\theta)^2}{12} \\
+Var[W] &amp;= \frac{\theta^2}{3}  \tag {14}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Substituting Eqn. &lt;script type=&quot;math/tex&quot;&gt;(14)&lt;/script&gt; into an Eqn. of the form &lt;script type=&quot;math/tex&quot;&gt;nVar[W] = 1&lt;/script&gt; yields:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+n\frac{\theta^2}{3} &amp;= 1  \\
+\theta^2 &amp;= \frac{3}{n}  \\
+\theta &amp;= \frac{\sqrt{3}}{\sqrt{n}}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The weights have thus been initialized from the uniform distribution over the interval
+$$
+\begin{align}
+W \sim U \left[ -\frac{\sqrt 3}{\sqrt {n}}, \frac{\sqrt 3}{\sqrt {n}} \right] \tag{15}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;The normalization factor may therefore be important when initializing deep networks because of the multiplicative effect through layers. The suggestion then is of an initialization procedure that maintains stable variances of activation and back-propagated gradients as one moves up or down the network. This is known as the &lt;strong&gt;normalized initialization&lt;/strong&gt;
+$$
+\begin{align}
+W \sim U \left[ -\frac{\sqrt 6}{\sqrt {n_{i} + n_{i+1}}}, \frac{\sqrt 6}{\sqrt {n_{i} + n_{i+1}}} \right] \tag{16}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;The normalized initialization is a clear compromise between the two constraints involving &lt;script type=&quot;math/tex&quot;&gt;n_{i}&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;n_{i+1}&lt;/script&gt; (representing back-propagation and foward-propagation), If you used the input &lt;script type=&quot;math/tex&quot;&gt;X \in \mathbb{R}^{m \times n}&lt;/script&gt;, the normalized initialization would look as follows:
+$$
+\begin{align}
+W \sim U \left[ -\frac{\sqrt 6}{\sqrt {n + m}}, \frac{\sqrt 6}{\sqrt {n + m}} \right] \tag{17}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;h3 id=&quot;conclusions&quot;&gt;Conclusions&lt;/h3&gt;
+&lt;p&gt;In general, from Xavier and Bengio (2010) [1] experiments we can see that the variance of the gradients of the weights is the same for all the layers, but the variance of the back-propagated gradient might still vanish or explode as we consider deeper networks.&lt;/p&gt;
+
+&lt;h3 id=&quot;applications&quot;&gt;Applications&lt;/h3&gt;
+&lt;p&gt;The initialization routines derived here, more famously known as &lt;strong&gt;“Xavier Initialization”&lt;/strong&gt; have been successfully applied in various deep learning libraries. Below we shall look at
+&lt;a href=&quot;https://keras.io/&quot; target=&quot;_blank&quot;&gt;Keras&lt;/a&gt; a minimalist, highly modular neural networks library, written in Python and capable of running on top of either TensorFlow or Theano.&lt;/p&gt;
+
+&lt;p&gt;The initialization routine here is named “glorot_” following the name of one of the authors Xavier Glorot [1]. In the code snippet below, &lt;strong&gt;glorot_normal&lt;/strong&gt; is the implementation of Eqn. &lt;script type=&quot;math/tex&quot;&gt;(12)&lt;/script&gt; while  &lt;strong&gt;glorot_uniform&lt;/strong&gt; is the equivalent implementation of Eqn. &lt;script type=&quot;math/tex&quot;&gt;(15)&lt;/script&gt;&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;get_fans&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;prod&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:])&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;glorot_normal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;s&quot;&gt;''' Reference: Glorot &amp;amp; Bengio, AISTATS 2010
+    '''&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_fans&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sqrt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;2.&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;normal&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;glorot_uniform&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_fans&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;np&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sqrt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;6.&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fan_in&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fan_out&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;uniform&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;shape&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;s&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h3 id=&quot;references&quot;&gt;References&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;Glorot Xavier, and Yoshua Bengio. “Understanding the difficulty of training deep feedforward neural networks.” Aistats. Vol. 9. 2010. &lt;a href=&quot;http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Bradley, D. (2009). Learning in modular systems. Doctoral dissertation, The Robotics Institute, Carnegie Mellon University.&lt;/li&gt;
+  &lt;li&gt;Wikipedia - “Product of independent variables”. &lt;a href=&quot;https://en.wikipedia.org/wiki/Variance#Product_of_independent_variables&quot; target=&quot;_blank&quot;&gt;Variance&lt;/a&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+ </entry>
+ 
+ <entry>
+   <title>Initialization Of Feedfoward Networks</title>
+   <link href="http://www.jefkine.com/deep/2016/07/27/initialization-of-feedfoward-networks/"/>
+   <updated>2016-07-27T20:36:02+03:00</updated>
+   <id>http://www.jefkine.com/deep/2016/07/27/initialization-of-feedfoward-networks</id>
+   <content type="html">&lt;div class=&quot;message&quot;&gt;
+   &lt;strong&gt;Mathematics Behind Neural Network Weights Initialization - Part One: &lt;/strong&gt;
+   In this first of a three part series of posts, we will attempt to go through the weight initialization algorithms as developed by various researchers taking into account influences derived from the evolution of neural network architecture and the activation function in particular.
+&lt;/div&gt;
+
+&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Weight initialization has widely been recognized as one of the most effective approaches in improving training speed of neural networks. Yam and Chow [1] worked on an algorithm for determining the optimal initial weights of feedfoward neural networks based on the Cauchy’s inequality and a linear algebraic method.&lt;/p&gt;
+
+&lt;p&gt;The proposed method aimed at ensuring that the outputs of neurons existed in the &lt;strong&gt;active region&lt;/strong&gt; (i.e where the derivative of the activation function has a large value) while also increasing the rate of convergence. From the outputs of the last hidden layer and the given output patterns, the optimal values of the last layer of weights are evaluated by a least-squares method.&lt;/p&gt;
+
+&lt;p&gt;With the optimal initial weights determined, the initial error becomes substantially smaller and the number of iterations required to achieve the error criterion is significantly reduced.&lt;/p&gt;
+
+&lt;p&gt;Yam and Chow had previously worked on other methods with this method largely seen as an improvement on earlier proposed methods [2] and [3]. In [1] the rationale behind their proposed approach was to reduce the initial network error while preventing the network from getting stuck with the initial weights.&lt;/p&gt;
+
+&lt;h2 id=&quot;weight-initialization-method&quot;&gt;Weight Initialization Method&lt;/h2&gt;
+&lt;p&gt;Consider a multilayer neural network with &lt;script type=&quot;math/tex&quot;&gt;L&lt;/script&gt; fully interconnected layers. Layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; consists of &lt;script type=&quot;math/tex&quot;&gt;n_l+1&lt;/script&gt; neurons &lt;script type=&quot;math/tex&quot;&gt;(l = 1,2,\dotsm,L-1)&lt;/script&gt; in  which the last neuron is a bias node with a constant output of &lt;script type=&quot;math/tex&quot;&gt;1&lt;/script&gt;.&lt;/p&gt;
+
+&lt;h3 id=&quot;notation&quot;&gt;Notation&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; is the &lt;script type=&quot;math/tex&quot;&gt;l^{th}&lt;/script&gt; layer where &lt;script type=&quot;math/tex&quot;&gt;l=1&lt;/script&gt; is the first layer and &lt;script type=&quot;math/tex&quot;&gt;l=L&lt;/script&gt; is the last layer.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;o_{i,j}^l&lt;/script&gt; is the output vector at layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt;
+$$
+\begin{align}
+o_{i,j}^{l} &amp;amp;= \sum_{i =1}^{n_l+1} w_{i\rightarrow j}^l a_{p,i}^l
+\end{align}
+$$&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;w_{i\rightarrow j}^l&lt;/script&gt; is the weight vector connecting neuron &lt;script type=&quot;math/tex&quot;&gt;i&lt;/script&gt; of layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; with neuron &lt;script type=&quot;math/tex&quot;&gt;j&lt;/script&gt; of layer &lt;script type=&quot;math/tex&quot;&gt;l+1&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;a^l&lt;/script&gt; is the activated output vector for a hidden layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt;.
+$$
+\begin{align}
+a_{p,j}^{l} &amp;amp;= f(o_{p,j}^{l-1})
+\end{align}
+$$&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;f(x)&lt;/script&gt; is the activation function. A sigmoid function with the range of between &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;1&lt;/script&gt; is used as the activation function.
+$$
+\begin{align}
+f(x) = \frac{1}{1 + e^{(-x)}}
+\end{align}
+$$&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;P&lt;/script&gt; is the total number of patterns for network training.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;X^1&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;l=1&lt;/script&gt; is the matrix of all given inputs with dimensions &lt;script type=&quot;math/tex&quot;&gt;P&lt;/script&gt; rows and &lt;script type=&quot;math/tex&quot;&gt;n_l + 1&lt;/script&gt; columns. All the last entries of the matrix &lt;script type=&quot;math/tex&quot;&gt;X^1&lt;/script&gt; are a constant &lt;script type=&quot;math/tex&quot;&gt;1&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;W^l&lt;/script&gt; is the weight matrix between layers &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;l+1&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;A^L&lt;/script&gt; is the matrix representing all entries of the last output layer &lt;script type=&quot;math/tex&quot;&gt;L&lt;/script&gt; given by
+$$
+\begin{align}
+a_{p,j}^L &amp;amp;= f(o_{p,j}^{L-1})
+\end{align}
+$$&lt;/li&gt;
+  &lt;li&gt;&lt;script type=&quot;math/tex&quot;&gt;T&lt;/script&gt; is the matrix of all the targets with dimensions &lt;script type=&quot;math/tex&quot;&gt;P&lt;/script&gt; rows and &lt;script type=&quot;math/tex&quot;&gt;n_L&lt;/script&gt; columns.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The output of all hidden layers and the output layer are obtained by propagating the training patterns through the network.&lt;/p&gt;
+
+&lt;p&gt;Learning will then be achieved by adjusting the weights such that &lt;script type=&quot;math/tex&quot;&gt;A^L&lt;/script&gt; is as close as possible or equals to &lt;script type=&quot;math/tex&quot;&gt;T&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the classical back-propagation algorithm, the weights are changed according to the gradient descent direction of an error surface &lt;script type=&quot;math/tex&quot;&gt;E&lt;/script&gt; (taken on the output units over all the &lt;script type=&quot;math/tex&quot;&gt;P&lt;/script&gt; patterns) using the following formula:
+$$
+\begin{align}
+E_p &amp;amp;= \sum_{p =1}^P \left( \frac{1}{2} \sum_{j}^{n_L}\left(t_{p,j} - a_{p,j}\right)^2 \right)
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Hence, the error gradient of the weight matrix &lt;script type=&quot;math/tex&quot;&gt;w_{i\rightarrow j}&lt;/script&gt; is:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\frac{\partial E_p}{\partial w_{i\rightarrow j}^l} &amp;= \frac{\partial E_p}{\partial o_{i,j}^{l}} \frac{\partial o_{i,j}^{l}}{\partial w_{i\rightarrow j}^l} \\
+&amp;= \delta^{l}_{p,j} \frac{\partial}{\partial w_{i\rightarrow j}^{l}} w_{i\rightarrow j}^{l} a_{p,i}^{l} \\
+&amp;= \delta^{l}_{p,j} a_{p,i}^{l}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;If the standard sigmoid function with a range between 0 and 1 is used, the rule of changing the weights cane be shown to be:
+$$
+\begin{align}
+  \Delta w_{i,j}^l =&amp;amp;\ -\frac{\eta}{P} \sum_{p =1}^P \delta_{p,j}^{l}a_{p,i}^{l}
+\end{align}
+$$
+where &lt;script type=&quot;math/tex&quot;&gt;\eta&lt;/script&gt; is the learning rate (or rate of gradient descent)&lt;/p&gt;
+
+&lt;p&gt;The error gradient of the input vector at a layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; is defined as
+$$
+\begin{align}
+\delta_{p,j}^l = \frac{\partial E_p}{\partial o_{p,j}^l}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;The error gradient of the input vector at the last layer &lt;script type=&quot;math/tex&quot;&gt;l = L - 1&lt;/script&gt; is&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\delta_{p,j}^{L-1} &amp;= \frac{\partial E_p}{\partial o_{p,j}^{L-1}} \\
+&amp;= \frac{\partial}{\partial o_{p,j}^{L-1}} \frac{1}{2}(t_{p,j} - a_{p,j}^L)^2 \\
+&amp;= \left( \frac{\partial}{\partial a_{p,j}^{L}} \frac{1}{2}(t_{p,j} - a_{p,j}^L)^2 \right) \frac{\partial a_{p,j}^{L}}{\partial o_{p,j}^{L-1}} \\
+&amp;= (t_{p,j} - a_{p,j}^L) \frac{\partial f(o_{p,j}^{L-1})}{\partial o_{p,j}^{L-1}} \\
+&amp;= (t_{p,j} - a_{p,j}^L) f'(o_{p,j}^{L-1}) \tag 1
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Derivative of a sigmoid &lt;script type=&quot;math/tex&quot;&gt;f'(o^{L-1}) = f(o^{L-1})(1 - f(o^{L-1}))&lt;/script&gt;. This result can be substituted in equation &lt;script type=&quot;math/tex&quot;&gt;(1)&lt;/script&gt; as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\delta_{p,j}^{L-1} &amp;= (t_{p,j} - a_{p,j}^L)f(o_{p,j}^{L-1})(1 - f(o_{p,j}^{L-1})) \\
+&amp;= (t_{p,j} - a_{p,j}^L)a_{p,j}^L(1 - a_{p,j}^L) \tag 2
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;For the other layers i.e &lt;script type=&quot;math/tex&quot;&gt;l = 1,2,\dotsm,L-2&lt;/script&gt;, the scenario is such that multiple weighted outputs from previous the layer &lt;script type=&quot;math/tex&quot;&gt;l-1&lt;/script&gt; lead to a unit in the current layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt; yet again multiple outputs.&lt;/p&gt;
+
+&lt;p&gt;The weight &lt;script type=&quot;math/tex&quot;&gt;w_{j\rightarrow k}^{l+1}&lt;/script&gt; connects neurons &lt;script type=&quot;math/tex&quot;&gt;j&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt;, the sum of the weighed inputs from neuron &lt;script type=&quot;math/tex&quot;&gt;j&lt;/script&gt; is denoted by &lt;script type=&quot;math/tex&quot;&gt;k\in\text{outs}(j)&lt;/script&gt; where &lt;script type=&quot;math/tex&quot;&gt;k&lt;/script&gt; iterates over all neurons connected to &lt;script type=&quot;math/tex&quot;&gt;j&lt;/script&gt;&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\delta_{p,j}^l &amp;= \frac{\partial E_p}{\partial o_{p,j}^l} \\
+&amp;= \frac{\partial E_p}{\partial o_{j,k}^{l+1}} \frac{\partial o_{j,k}^{l+1}}{\partial o_{p,j}^l} \\
+&amp;= \delta_{p,k}^{l+1} \frac{\partial o_{j,k}^{l+1}}{\partial o_{p,j}^l} \\
+&amp;= \delta_{p,k}^{l+1} \frac{\partial w_{j\rightarrow k}^{l+1} a_{p,j}^{l+1}}{\partial o_{p,j}^l} \\
+&amp;= \delta_{p,k}^{l+1} \frac{\partial w_{j\rightarrow k}^{l+1} a_{p,j}^{l+1}}{\partial a_{p,j}^{l+1}} \frac{\partial a_{p,j}^{l+1}}{\partial o_{p,j}^l} \\
+&amp;= \delta_{p,k}^{l+1} \frac{\partial w_{j\rightarrow k}^{l+1} a_{p,j}^{l+1}}{\partial a_{p,j}^{l+1}} \frac{\partial f(o_{p,j}^l)}{\partial o_{p,j}^l} \\
+&amp;= \frac{\partial f(o_{p,j}^l)}{\partial o_{p,j}^l} \sum_{k\in\text{outs}(j)} \delta_{p,k}^{l+1} \frac{\partial }{\partial a_{p,j}^{l+1}}w_{j\rightarrow k}^{l+1} a_{p,j}^{l+1}  \\
+&amp;= f'(o_{p,j}^l) \sum_{k\in\text{outs}(j)} \delta_{p,k}^{l+1} w_{j\rightarrow k}^{l+1} \tag 3
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Derivative of a sigmoid &lt;script type=&quot;math/tex&quot;&gt;f'(o^{l}) = f(o^{l})(1 - f(o^{l}))&lt;/script&gt;. This result can be substituted in equation &lt;script type=&quot;math/tex&quot;&gt;(3)&lt;/script&gt; as follows:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\delta_{p,j}^l &amp;= f(o_{p,j}^{l})(1 - f(o_{p,j}^{l})) \sum_{k\in\text{outs}(j)} \delta_{p,k}^{l+1} w_{j\rightarrow k}^{l+1} \\
+&amp;= a_{p,j}^{l+1}(1 - a_{p,j}^{l+1}) \sum_{k\in\text{outs}(j)} \delta_{p,k}^{l+1} w_{j\rightarrow k}^{l+1} \tag 4
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;From Eqns. &lt;script type=&quot;math/tex&quot;&gt;(2)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;(4)&lt;/script&gt;, we can observe that the change in weight depends on outputs of neurons connected to it. When outputs of neurons are &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt; or &lt;script type=&quot;math/tex&quot;&gt;1&lt;/script&gt;, the derivative of the activation function evaluated at this value is zero. This means there will be no weight change at all even if there is a difference between the value of the target and the actual output.&lt;/p&gt;
+
+&lt;p&gt;The magnitudes required to ensure that the outputs of the hidden units are in the active region and are derived by solving the following problem:
+$$
+\begin{align}
+1 - \overline{t} \leq a_{p,j}^{l+1} \leq \overline{t} \tag 6
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;A sigmoid function also has the &lt;a href=&quot;https://en.wikipedia.org/wiki/Logistic_function&quot; target=&quot;_blank&quot;&gt;property&lt;/a&gt; &lt;script type=&quot;math/tex&quot;&gt;f(1 - x) = f(-x)&lt;/script&gt;  which means Eqn &lt;script type=&quot;math/tex&quot;&gt;(6)&lt;/script&gt; can also be written as:
+$$
+\begin{align}
+-\overline{t} \leq a_{p,j}^{l+1} \leq \overline{t} \tag 7
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Taking the inverse of Eqn&lt;script type=&quot;math/tex&quot;&gt;(7)&lt;/script&gt; such that &lt;script type=&quot;math/tex&quot;&gt;f^{-1}(\overline{t}) = s&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;f^{-1}(a_{p,j}^{l+1}) = o_{p,j}^{l}&lt;/script&gt; results in
+$$
+\begin{align}
+-\overline{s} \leq o_{p,j}^{l} \leq \overline{s} \tag 8
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;The active region is then assumed to be the region in which the derivative of the activation function is greater than &lt;script type=&quot;math/tex&quot;&gt;4%&lt;/script&gt; of the maximum derivative, i.e.
+$$
+\begin{align}
+\overline{s} \approx 4.59 \qquad \text{for the standard sigmoid function} \tag {9a}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;and
+$$
+\begin{align}
+\overline{s} \approx 2.29 \qquad \text{for the hyperbolic tangent function} \tag {9b}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Eqn&lt;script type=&quot;math/tex&quot;&gt;(8)&lt;/script&gt; can then be simplified to
+$$
+\begin{align}
+(o_{p,j}^{l})^2 \leq \overline{s}^2 \qquad or \qquad \left(\sum_{i =1}^{n_l+1} a_{p,i}^{l} w_{i,j}^{l} \right)^2 \leq \overline{s}^2 \tag {10}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;By Cauchy’s inequality,
+$$
+\begin{align}
+\left(\sum_{i =1}^{n_l+1} a_{p,i}^{l} w_{i,j}^{l} \right)^2 \quad  \leq \quad  \sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2 \sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \tag {11}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Consequently, Eqn&lt;script type=&quot;math/tex&quot;&gt;(10)&lt;/script&gt; is replaced by
+$$
+\begin{align}
+\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2 \sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \leq \overline{s}^2 \tag {12}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;If &lt;script type=&quot;math/tex&quot;&gt;n_l&lt;/script&gt; is a large number and if the weights are values between &lt;script type=&quot;math/tex&quot;&gt;-\theta_p^l&lt;/script&gt; to  &lt;script type=&quot;math/tex&quot;&gt;\theta_p^l&lt;/script&gt; with zero mean independent identical distributions, the general weight formula becomes:
+$$
+\begin{align}
+\sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \approx \left\lgroup
+\matrix{number\cr of\cr weights}
+\right\rgroup  * \left\lgroup
+\matrix{variance\cr of\cr weights}
+\right\rgroup \tag {13}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;For uniformly distributed sets of weights &lt;script type=&quot;math/tex&quot;&gt;w^l \overset{iid}{\sim} U \left[ -\theta_p^l, \theta_p^l \right]&lt;/script&gt; we apply the formula &lt;script type=&quot;math/tex&quot;&gt;\left\{ x \sim U[a,b] \implies Var[x] = \frac{(b-a)^2}{12} \right\}&lt;/script&gt; for &lt;a href=&quot;http://math.stackexchange.com/questions/728059/prove-variance-in-uniform-distribution-continuous&quot; target=&quot;_blank&quot;&gt;variance of a uniform distribution&lt;/a&gt;, and subsequently show that.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+Var[w^l] &amp;= \frac{(2\theta_p^l)^2}{12} \\
+Var[w^l] &amp;= \frac{(\theta_p^l)^2}{3}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;This can then be used in the next Eqn as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \quad \approx (n_l+1) * \frac{(\theta_p^l)^2}{3} \quad \approx \frac{(n_l+1)}{3}(\theta_p^l)^2 \tag {14}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;By substituting Eqn&lt;script type=&quot;math/tex&quot;&gt;(14)&lt;/script&gt; into &lt;script type=&quot;math/tex&quot;&gt;(12)&lt;/script&gt;&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2 \frac{(n_l+1)}{3}(\theta_p^l)^2 \leq \overline{s}^2 \\[2ex]
+(\theta_p^l)^2 \leq \overline{s}^2 \left[\frac{3}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}\right] \\[2ex]
+\theta_p^l \leq \overline{s}\sqrt{\frac{3}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}} \tag {15}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;For sets of weights with normal distribution &lt;script type=&quot;math/tex&quot;&gt;w^l \overset{iid}{\sim} \mathcal N (0,(\theta_p^l)^2)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;n_l&lt;/script&gt; is a large number, &lt;script type=&quot;math/tex&quot;&gt;\left\{\sigma^2 = (\theta_p^l)^2 \implies Var[w^l] = (\theta_p^l)^2 \right\}&lt;/script&gt;
+$$
+\begin{align}
+\sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \quad \approx (n_l+1) * (\theta_p^l)^2 \quad \approx \frac{(n_l+1)}{1}(\theta_p^l)^2 \tag {16}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;By substituting Eqn&lt;script type=&quot;math/tex&quot;&gt;(16)&lt;/script&gt; into &lt;script type=&quot;math/tex&quot;&gt;(12)&lt;/script&gt;&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{align}
+\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2 \frac{(n_l+1)}{1}(\theta_p^l)^2 \leq \overline{s}^2 \\[2ex]
+(\theta_p^l)^2 \leq \overline{s}^2 \left[\frac{1}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}\right] \\[2ex]
+\theta_p^l \leq \overline{s}\sqrt{\frac{1}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}} \tag {17}
+\end{align}&lt;/script&gt;
+
+&lt;p&gt;In the proposed algorithm therefore, the magnitude of weights &lt;script type=&quot;math/tex&quot;&gt;\theta_p^l&lt;/script&gt; for pattern &lt;script type=&quot;math/tex&quot;&gt;p&lt;/script&gt; is chosen to be:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{align}
+\theta_p^l \leq
+\begin{cases}
+\overline{s}\sqrt{\frac{3}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}}, &amp; \text{for weights with uniform distribution} \\[2ex]
+\overline{s}\sqrt{\frac{1}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}}, &amp; \text{for weights with normal distribution}
+\end{cases} \tag{18}
+\end{align} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;For different input patterns, the values of &lt;script type=&quot;math/tex&quot;&gt;\theta_p^l&lt;/script&gt; are different, To make sure the outputs of hidden neurons are in the active region for all patterns, the following value is selected
+$$
+\begin{align}
+\theta^l &amp;amp;= \min_{\rm p=1,\dotsm,P}(\theta_p^l) \tag{19}
+\end{align}
+$$&lt;/p&gt;
+
+&lt;p&gt;Deep networks using of sigmiod activation functions exhibit the challenge of exploding or vanishing activations and gradients. The diagram below gives us a perspective of how this occurs.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/active-region.png&quot; alt=&quot;active region&quot; class=&quot;img-responsive&quot; /&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;When the parameters are too large - the activations become larger and larger (i.e tend to exist in the red region above), then your activations will saturate and become meaningless, with gradients approaching &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt;.&lt;/li&gt;
+  &lt;li&gt;When the parameters are too small - the activations keep dropping layer after layer (i.e tend to exist in the green region above). At levels closer to zero the sigmoid activation function become more linear. Gradually the non-linearity is lost with derivatives of constants being &lt;script type=&quot;math/tex&quot;&gt;0&lt;/script&gt; and hence no benefit of multiple layers.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&quot;summary-procedure-of-the-weight-initialization-algorithm&quot;&gt;Summary Procedure of The Weight Initialization Algorithm&lt;/h3&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Evaluate &lt;script type=&quot;math/tex&quot;&gt;\theta^1&lt;/script&gt; using the input training patterns by applying Eqns &lt;script type=&quot;math/tex&quot;&gt;(18)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;(19)&lt;/script&gt; with &lt;script type=&quot;math/tex&quot;&gt;l =1&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;The weights &lt;script type=&quot;math/tex&quot;&gt;w_{i\rightarrow j}^1&lt;/script&gt; are initialized by a random number generator with uniform distribution between &lt;script type=&quot;math/tex&quot;&gt;-\theta^1&lt;/script&gt; to &lt;script type=&quot;math/tex&quot;&gt;\theta^1&lt;/script&gt; or normal distribution &lt;script type=&quot;math/tex&quot;&gt;\mathcal N (0,(\theta_p^l)^2)&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;Evaluate &lt;script type=&quot;math/tex&quot;&gt;a_{p,i}^2&lt;/script&gt; by feedforwarding the input patterns through the network using &lt;script type=&quot;math/tex&quot;&gt;w_{i\rightarrow j}^1&lt;/script&gt;&lt;/li&gt;
+  &lt;li&gt;For &lt;script type=&quot;math/tex&quot;&gt;l = 1,2,\dotsm,L-2&lt;/script&gt;
+    &lt;ul&gt;
+      &lt;li&gt;Evaluate &lt;script type=&quot;math/tex&quot;&gt;\theta^1&lt;/script&gt; using the outputs of layer &lt;script type=&quot;math/tex&quot;&gt;l&lt;/script&gt;, i.e &lt;script type=&quot;math/tex&quot;&gt;a_{p,i}^l&lt;/script&gt; and applying Eqns &lt;script type=&quot;math/tex&quot;&gt;(18)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;(19)&lt;/script&gt;&lt;/li&gt;
+      &lt;li&gt;The weights &lt;script type=&quot;math/tex&quot;&gt;w_{i\rightarrow j}^1&lt;/script&gt; are initialized by a random number generator with uniform distribution between &lt;script type=&quot;math/tex&quot;&gt;-\theta^l&lt;/script&gt; to &lt;script type=&quot;math/tex&quot;&gt;\theta^l&lt;/script&gt; or normal distribution &lt;script type=&quot;math/tex&quot;&gt;\mathcal N (0,(\theta_p^l)^2)&lt;/script&gt;&lt;/li&gt;
+      &lt;li&gt;Evaluate &lt;script type=&quot;math/tex&quot;&gt;a_{p,i}^{l+1}&lt;/script&gt; by feedforwarding the outputs of &lt;script type=&quot;math/tex&quot;&gt;a_{p,i}^{l}&lt;/script&gt;  through the network using &lt;script type=&quot;math/tex&quot;&gt;w_{i\rightarrow j}^l&lt;/script&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;After finding &lt;script type=&quot;math/tex&quot;&gt;a_{p,i}^{L-1}&lt;/script&gt; or &lt;script type=&quot;math/tex&quot;&gt;A^{L-1}&lt;/script&gt;, we can find the last layer of weights &lt;script type=&quot;math/tex&quot;&gt;W^{L-1}&lt;/script&gt; by solving the following equation using a least-squares method,
+$$
+\begin{align}
+\Vert A^{L-1}W^{L-1} - S \Vert_2 \tag{20}
+\end{align}
+$$&lt;/p&gt;
+
+    &lt;ul&gt;
+      &lt;li&gt;
+        &lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;S&lt;/script&gt; is a matrix, which has entries,
+$$
+\begin{align}
+s_{i,j} = f^{-1}(t_{i,j}) \tag{21}
+\end{align}
+$$&lt;/p&gt;
+      &lt;/li&gt;
+      &lt;li&gt;
+        &lt;p&gt;where &lt;script type=&quot;math/tex&quot;&gt;t_{i,j}&lt;/script&gt; are the entries of target matrix &lt;script type=&quot;math/tex&quot;&gt;T&lt;/script&gt;.&lt;/p&gt;
+      &lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The weight initialization process is then completed. The linear least-squares problem shown in Eqn&lt;script type=&quot;math/tex&quot;&gt;(20)&lt;/script&gt; can be solved by QR factorization using  Householder reflections [4].&lt;/p&gt;
+
+&lt;p&gt;In the case of an overdetermined system, QR factorization produces a solution that is the best approximation in a least-squares sense. In the case of an under-determined system, QR factorization computes the minimal-norm solution.&lt;/p&gt;
+
+&lt;h3 id=&quot;conclusions&quot;&gt;Conclusions&lt;/h3&gt;
+&lt;p&gt;In general the proposed algorithm with uniform distributed weights performs better than the algorithm with normal distributed weights. The proposed algorithm is also applicable to networks with different activation functions.&lt;/p&gt;
+
+&lt;p&gt;It is worth noting that the time required for the initialization process is negligible when compared with training process.&lt;/p&gt;
+
+&lt;h3 id=&quot;references&quot;&gt;References&lt;/h3&gt;
+&lt;ol&gt;
+  &lt;li&gt;A weight initialization method for improving training speed in feedforward neural network Jim Y.F. Yam, Tommy W.S. Chow
+ (1998) &lt;a href=&quot;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.8140&amp;amp;rep=rep1&amp;amp;type=pdf&quot; target=&quot;_blank&quot;&gt;[pdf]&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Y.F. Yam, T.W.S. Chow, Determining initial weights of feedforward neural networks based on least-squares method, Neural Process. Lett. 2 (1995) 13-17.&lt;/li&gt;
+  &lt;li&gt;Y.F. Yam, T.W.S. Chow, A new method in determining the initial weights of feedforward neural
+networks, Neurocomputing 16 (1997) 23-32.&lt;/li&gt;
+  &lt;li&gt;G.H. Golub, C.F. Van Loan, Matrix Computations, The Johns Hopkins University Press, Baltimore,
+MD, 1989&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+ </entry>
+ 
+
+</feed>
