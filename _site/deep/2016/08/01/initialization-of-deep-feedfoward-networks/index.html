@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Initialization Of Deep Feedfoward Networks | DeepGrid</title>
+<meta name="generator" content="Jekyll v3.8.1" />
+<meta property="og:title" content="Initialization Of Deep Feedfoward Networks" />
+<meta name="author" content="Jefkine" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Mathematics Behind Neural Network Weights Initialization. Xavier initialization. The case of linear activation functions sigmoid and tanh. In this second of a three part series of posts, we will go through the weight initialization technique devised by Yoshua Bengio and Xavier Glorot" />
+<meta property="og:description" content="Mathematics Behind Neural Network Weights Initialization. Xavier initialization. The case of linear activation functions sigmoid and tanh. In this second of a three part series of posts, we will go through the weight initialization technique devised by Yoshua Bengio and Xavier Glorot" />
+<link rel="canonical" href="http://www.jefkine.com/deep/2016/08/01/initialization-of-deep-feedfoward-networks/" />
+<meta property="og:url" content="http://www.jefkine.com/deep/2016/08/01/initialization-of-deep-feedfoward-networks/" />
+<meta property="og:site_name" content="DeepGrid" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2016-08-01T20:36:02+03:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"http://www.jefkine.com/deep/2016/08/01/initialization-of-deep-feedfoward-networks/"},"@type":"BlogPosting","url":"http://www.jefkine.com/deep/2016/08/01/initialization-of-deep-feedfoward-networks/","author":{"@type":"Person","name":"Jefkine"},"headline":"Initialization Of Deep Feedfoward Networks","dateModified":"2016-08-01T20:36:02+03:00","datePublished":"2016-08-01T20:36:02+03:00","description":"Mathematics Behind Neural Network Weights Initialization. Xavier initialization. The case of linear activation functions sigmoid and tanh. In this second of a three part series of posts, we will go through the weight initialization technique devised by Yoshua Bengio and Xavier Glorot","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <title>
+    
+      Initialization Of Deep Feedfoward Networks &middot; DeepGrid
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+
+  <!-- MathJax -->
+  <script src="https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-82905904-1', 'auto');
+  ga('require', 'linkid');
+  ga('send', 'pageview');
+
+</script>
+
+
+</head>
+
+
+  <body>
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-family: 'PT Sans'; font-size: 42px;">
+        <a href="/">
+          DeepGrid
+        </a>
+      </h1>
+      <p class="lead">Organic Deep Learning.</p>
+    </div>
+
+    <div>
+      
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 16px; color: #555">Latest Article:</p>
+        <a href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/"><strong>Vanishing And Exploding Gradient Problems</strong></a>
+        <p style="margin-top: 0px; margin-bottom: 10px;"><span style="font-size: 12px; color: #555">21 May 2018</span></p>
+      
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item" href="/">Home</a>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/about/">About</a>
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/archive/">Archive</a>
+          
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    </nav>
+
+    <p style="margin: 0px; color: #fff"><a href="https://github.com/jefkine" target="_blank">GitHub</p>
+    <p style="margin-top: 0px; margin-bottom: 10px;"><a href="https://twitter.com/jefkine" target="_blank">Twitter @jefkine</a></p>
+
+    <p>&copy; 2018. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Initialization Of Deep Feedfoward Networks</h1>
+  <span class="post-date">Jefkine, 1 August 2016</span>
+  <div class="message">
+   <strong>Mathematics Behind Neural Network Weights Initialization - Part Two: </strong>
+   In this second of a three part series of posts, we will attempt to go through the weight initialization algorithms as developed by various researchers taking into account influences derived from the evolution of neural network architecture and the activation function in particular.
+</div>
+
+<p><img src="/assets/images/xavier_initialization.png" alt="active region" class="img-responsive" /></p>
+
+<h2 id="introduction">Introduction</h2>
+<p>Deep multi-layered neural networks often require experiments that interrogate different initialization routines, activations and variation of gradients across layers during training. These provide valuable insights into what aspects should be improved to aid faster and successful training.</p>
+
+<p>For Xavier and Bengio (2010) [1] the objective was to better understand why standard gradient descent from random initializations was performing poorly in deep neural networks. They carried out analysis driven by investigative experiments that monitored activations (watching for saturations of hidden units) and gradients across layers and across training iterations. They evaluated effects on choices of different activation functions (how it might affect saturation) and initialization procedure (with lessons learned from unsupervised pre-training as a form of initialization that already had drastic impact)</p>
+
+<p>A new initialization scheme that brings substantially faster convergence was proposed. In this article we discuss the algorithm put forward by Xavier and Bengio (2010) [1]</p>
+
+<h3 id="gradients-at-initialization">Gradients at Initialization</h3>
+<p>Earlier on, Bradley (2009) [2] found that in networks with linear activation at each layer, the variance of the back-propagated gradients decreases as we go backwards in the network. Below we will look at theoretical considerations and a derivation of the <strong>normalized initialization</strong>.</p>
+
+<h3 id="notation">Notation</h3>
+<ol>
+  <li><script type="math/tex">f</script> is the activation function. For the dense artificial neural network, a symmetric activation function <script type="math/tex">f</script> with unit derivative at <script type="math/tex">0\,(i.e\, f'(0) = 1)</script> is chosen. Hyperbolic tangent and softsign are both forms of symmetric activation functions.</li>
+  <li><script type="math/tex">z^i</script> is the activation vector at layer <script type="math/tex">i</script>, <script type="math/tex">z^i = f(s^{i-1})</script></li>
+  <li><script type="math/tex">s^i</script> is the argument vector of the activation function at layer <script type="math/tex">i</script>, <script type="math/tex">s^i = z^{i-1}w^i + b^i</script></li>
+  <li><script type="math/tex">w^i</script> is the weight vector connecting neurons in layer <script type="math/tex">i</script> with neurons in layer <script type="math/tex">i+1</script>.</li>
+  <li><script type="math/tex">b^i</script> is the bias vector on layer <script type="math/tex">i</script>.</li>
+  <li><script type="math/tex">x</script> is the network input.</li>
+</ol>
+
+<p>From the notation above, it is easy to derive the following equations of back-propagation</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial Cost}{\partial s_k^{i}} &= f'(s_k^{i}) \sum_{l\in\text{outs}(k)}(w_{k\rightarrow l}^{i+1}) \frac{\partial Cost}{\partial s_k^{i+1}} \tag {1a} \\
+\frac{\partial Cost}{\partial s_k^{i}} &= f'(s_k^{i})W_{k,\bullet}^{i+1} \frac{\partial Cost}{\partial s_k^{i+1}} \tag {1b} \\
+\frac{\partial Cost}{\partial w_{l,k}^{i}} &= z_l^i\frac{\partial Cost}{\partial s_k^{i}} \tag 2
+\end{align} %]]></script>
+
+<p>The variances will be expressed with respect to the input, output and weight initialization randomness. Considerations made include:</p>
+
+<ul>
+  <li>Initialization occurs in a linear regime</li>
+  <li>Weights are initialized independently</li>
+  <li>Input feature variances are the same <script type="math/tex">( =Var[x])</script></li>
+  <li>There is no correlation between our input and our weights and both are zero-mean.</li>
+  <li>All biases have been initialized to zero.</li>
+</ul>
+
+<p>For the input layer, <script type="math/tex">X \in \mathbb{R}^{m \times n}</script> with <script type="math/tex">n</script> components each from <script type="math/tex">m</script> training samples. Here the neurons are linear with random weights <script type="math/tex">W^{(in\rightarrow 1)} \in \mathbb{R}^{m \times a}</script> outputting <script type="math/tex">S^{(1)} \in \mathbb{R}^{n \times a}</script>.</p>
+
+<p>The output <script type="math/tex">S^{(1)}</script> can be shown by the equations below:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+S^{(1)} &= XW^{(in\rightarrow 1)} \\
+S^{(1)}_{ij} =& \sum_{k=1}^m X_{ik}W^{(in\rightarrow 1)}_{kj}
+\end{align} %]]></script>
+
+<p>Given <script type="math/tex">X</script> and <script type="math/tex">W</script> are independent, we can show that the <a href="https://en.wikipedia.org/wiki/Variance#Product_of_independent_variables" target="_blank">variance of their product</a> can be given by:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\text{Var}(W_iX_i) &= E[X_i]^2 \text{Var}(W_i) + E[W_i]^2 \text{Var}(X_i) + \text{Var}(W_i)\text{Var}(X_i) \tag {3}
+\end{align} %]]></script>
+
+<p>Considering our inputs and weights both have mean <script type="math/tex">0</script>, Eqn. <script type="math/tex">(3)</script> simplifies to</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\text{Var}(W_iX_i) &= \text{Var}(W_i)\text{Var}(X_i)
+\end{align} %]]></script>
+
+<p><script type="math/tex">X_i</script> and <script type="math/tex">W_i</script> are all independent and identically distributed, <a href="http://eli.thegreenplace.net/2009/01/07/variance-of-the-sum-of-independent-variables" target="_blank">we can therefore show that:</a></p>
+
+<p><script type="math/tex">% <![CDATA[
+\begin{align}
+\text{Var}(\sum_{i=1}^n W_iX_i) &= \text{Var}(W_1X_1 + W_2X_2 + \dotsb + W_n X_n) = n\text{Var}(W_i)\text{Var}(X_i)
+\end{align}
+\ %]]></script></p>
+
+<p>Further, lets now look at two adjacent layers <script type="math/tex">i</script> and <script type="math/tex">i'</script>. Here, <script type="math/tex">n_i</script> is used to denote the size of layer layer <script type="math/tex">i</script>. Applying the derivative of the activation function at <script type="math/tex">s_k^i</script> yields a value of approximately one.</p>
+
+<p><script type="math/tex">\begin{align}
+f'(s_k^{i}) \approx 1, \tag {4}
+\end{align}
+\</script></p>
+
+<p>Then using our prior knowledge of independent and identically distributed  <script type="math/tex">X_i</script> and <script type="math/tex">W_i</script>, we have.</p>
+
+<p><script type="math/tex">% <![CDATA[
+\begin{align}
+Var[z^i] &= Var[x] \prod_{i'= 0}^{i-1} n_{i'}Var[W^{i'}] \tag {5}
+\end{align}
+\ %]]></script></p>
+
+<p><script type="math/tex">Var[W^{i'}]</script> in Eqn. <script type="math/tex">5</script>, is the shared scalar variance of all weights at layer <script type="math/tex">i'</script>. Taking these observations into consideration, a network with <script type="math/tex">d</script> layers, will have the following Eqns.</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Var \left[ \frac{\partial Cost}{\partial s^{i}} \right] &= Var \left[ \frac{\partial Cost}{\partial s^{d}} \right] \prod_{i'= i}^{d} n_{i'+1}Var[W^{i'}], \tag {6} \\
+Var \left[ \frac{\partial Cost}{\partial w^{i}} \right] &= \prod_{i'= 0}^{i - 1} n_{i'}Var[W^{i'}] \prod_{i'= i}^{d - 1} n_{i'+1}Var[W^{i'}] \times Var[x] Var \left[ \frac{\partial Cost}{\partial s^{d}} \right].  \tag {7}
+\end{align} %]]></script>
+
+<p>We would then like to steady the variance such there is equality from layer to layer. From a foward-propagation point of view, to keep information flowing we would like that</p>
+
+<p><script type="math/tex">% <![CDATA[
+\begin{align}
+\forall (i,i'), \, Var[z^i] &= Var[z^{i'}]. \tag {8}
+\end{align}
+\ %]]></script></p>
+
+<p>From a back-propagation point of view, we would like to have:</p>
+
+<p><script type="math/tex">% <![CDATA[
+\begin{align}
+\forall (i,i'), \, Var \left[ \frac{\partial Cost}{\partial s^{i}} \right] &= Var \left[ \frac{\partial Cost}{\partial s^{i'}} \right]. \tag {9}
+\end{align}
+\ %]]></script></p>
+
+<p>For Eqns. <script type="math/tex">(8)</script> and <script type="math/tex">(9)</script> to hold, the shared scalar variances <script type="math/tex">n_{i'}Var[W^{i'}]</script> in Eqn. <script type="math/tex">(5)</script> should be <script type="math/tex">1</script>. This is the same as trying to ensure the variances of the input and output are consistent (realize that the technique used here helps avoid reducing or magnifying the signals exponentially hence mitigating the exploding or vanishing gradient problem):</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\forall (i), \quad n_{i}Var[W^{i}] &= 1 \tag {10a} \\
+\forall (i), \quad Var[W^{i}] &= \frac{1}{n_{i}} \tag {10b} \\
+\forall (i), \quad n_{i+1}Var[W^{i}] &= 1 \tag {11a} \\
+\forall (i), \quad Var[W^{i}] &= \frac{1}{n_{i+1}} \tag {11b} \\
+\end{align} %]]></script>
+
+<p>As a compromise between the two constraints (representing back-propagation and foward-propagation), we might want to have
+$$
+\begin{align}
+\forall (i), \quad \frac{2}{n_{i} + n_{i+1}} \tag {12}
+\end{align}
+$$</p>
+
+<p>In the experimental setting chosen by Xavier and Bengio (2010) [1], the standard initialization weights <script type="math/tex">W_{i,j}</script> at each layer using the commonly used heuristic:
+$$
+\begin{align}
+W_{i,j} \sim U \left[ -\frac{1}{\sqrt n}, \frac{1}{\sqrt n} \right],  \tag {13}
+\end{align}
+$$</p>
+
+<p>where <script type="math/tex">U \left[ -\theta, \theta \right]</script> is the uniform distribution in the interval <script type="math/tex">\left(-\theta, \theta \right)</script> and <script type="math/tex">n</script> is the size of the previous layer (the number of columns of <script type="math/tex">W</script>).</p>
+
+<p>For uniformly distributed sets of weights <script type="math/tex">W \overset{iid}{\sim} U \left[ -\theta, \theta \right]</script> with zero mean, we can use the formula <script type="math/tex">\left\{ x \sim U[a,b] \implies Var[x] = \frac{(b-a)^2}{12} \right\}</script> for <a href="http://math.stackexchange.com/questions/728059/prove-variance-in-uniform-distribution-continuous" target="_blank">variance of a uniform distribution</a> to show that:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Var[W] &= \frac{(2\theta)^2}{12} \\
+Var[W] &= \frac{\theta^2}{3}  \tag {14}
+\end{align} %]]></script>
+
+<p>Substituting Eqn. <script type="math/tex">(14)</script> into an Eqn. of the form <script type="math/tex">nVar[W] = 1</script> yields:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+n\frac{\theta^2}{3} &= 1  \\
+\theta^2 &= \frac{3}{n}  \\
+\theta &= \frac{\sqrt{3}}{\sqrt{n}}
+\end{align} %]]></script>
+
+<p>The weights have thus been initialized from the uniform distribution over the interval
+$$
+\begin{align}
+W \sim U \left[ -\frac{\sqrt 3}{\sqrt {n}}, \frac{\sqrt 3}{\sqrt {n}} \right] \tag{15}
+\end{align}
+$$</p>
+
+<p>The normalization factor may therefore be important when initializing deep networks because of the multiplicative effect through layers. The suggestion then is of an initialization procedure that maintains stable variances of activation and back-propagated gradients as one moves up or down the network. This is known as the <strong>normalized initialization</strong>
+$$
+\begin{align}
+W \sim U \left[ -\frac{\sqrt 6}{\sqrt {n_{i} + n_{i+1}}}, \frac{\sqrt 6}{\sqrt {n_{i} + n_{i+1}}} \right] \tag{16}
+\end{align}
+$$</p>
+
+<p>The normalized initialization is a clear compromise between the two constraints involving <script type="math/tex">n_{i}</script> and <script type="math/tex">n_{i+1}</script> (representing back-propagation and foward-propagation), If you used the input <script type="math/tex">X \in \mathbb{R}^{m \times n}</script>, the normalized initialization would look as follows:
+$$
+\begin{align}
+W \sim U \left[ -\frac{\sqrt 6}{\sqrt {n + m}}, \frac{\sqrt 6}{\sqrt {n + m}} \right] \tag{17}
+\end{align}
+$$</p>
+
+<h3 id="conclusions">Conclusions</h3>
+<p>In general, from Xavier and Bengio (2010) [1] experiments we can see that the variance of the gradients of the weights is the same for all the layers, but the variance of the back-propagated gradient might still vanish or explode as we consider deeper networks.</p>
+
+<h3 id="applications">Applications</h3>
+<p>The initialization routines derived here, more famously known as <strong>“Xavier Initialization”</strong> have been successfully applied in various deep learning libraries. Below we shall look at
+<a href="https://keras.io/" target="_blank">Keras</a> a minimalist, highly modular neural networks library, written in Python and capable of running on top of either TensorFlow or Theano.</p>
+
+<p>The initialization routine here is named “glorot_” following the name of one of the authors Xavier Glorot [1]. In the code snippet below, <strong>glorot_normal</strong> is the implementation of Eqn. <script type="math/tex">(12)</script> while  <strong>glorot_uniform</strong> is the equivalent implementation of Eqn. <script type="math/tex">(15)</script></p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">get_fans</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
+    <span class="n">fan_in</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">fan_out</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">return</span> <span class="n">fan_in</span><span class="p">,</span> <span class="n">fan_out</span>
+
+<span class="k">def</span> <span class="nf">glorot_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="s">''' Reference: Glorot &amp; Bengio, AISTATS 2010
+    '''</span>
+    <span class="n">fan_in</span><span class="p">,</span> <span class="n">fan_out</span> <span class="o">=</span> <span class="n">get_fans</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.</span> <span class="o">/</span> <span class="p">(</span><span class="n">fan_in</span> <span class="o">+</span> <span class="n">fan_out</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">glorot_uniform</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">fan_in</span><span class="p">,</span> <span class="n">fan_out</span> <span class="o">=</span> <span class="n">get_fans</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">6.</span> <span class="o">/</span> <span class="p">(</span><span class="n">fan_in</span> <span class="o">+</span> <span class="n">fan_out</span><span class="p">))</span>
+<span class="k">return</span> <span class="n">uniform</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></code></pre></figure>
+
+<h3 id="references">References</h3>
+<ol>
+  <li>Glorot Xavier, and Yoshua Bengio. “Understanding the difficulty of training deep feedforward neural networks.” Aistats. Vol. 9. 2010. <a href="http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf" target="_blank">[pdf]</a></li>
+  <li>Bradley, D. (2009). Learning in modular systems. Doctoral dissertation, The Robotics Institute, Carnegie Mellon University.</li>
+  <li>Wikipedia - “Product of independent variables”. <a href="https://en.wikipedia.org/wiki/Variance#Product_of_independent_variables" target="_blank">Variance</a>.</li>
+</ol>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+  
+    
+      <li>
+        <h3>
+          <a href="http://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/">
+            Initialization Of Deep Networks Case of Rectifiers
+            <small>08 Aug 2016</small>
+          </a>
+        </h3>
+      </li>
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  </ul>
+</div>
+
+
+  
+<div id="disqus_thread"></div>
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://jefkine.com/deep/2016/08/01/initialization-of-deep-feedfoward-networks/';
+    this.page.identifier = 'Initialization Of Deep Feedfoward Networks';
+};
+
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = '//jefkine.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+
+  </body>
+</html>

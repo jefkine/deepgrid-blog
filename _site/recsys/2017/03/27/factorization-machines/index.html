@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Factorization Machines | DeepGrid</title>
+<meta name="generator" content="Jekyll v3.8.1" />
+<meta property="og:title" content="Factorization Machines" />
+<meta name="author" content="Jefkine" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Factorization Machines. Factorization Machines (FM) the model and applications to the problem of sparse data for prediction in recommender systems." />
+<meta property="og:description" content="Factorization Machines. Factorization Machines (FM) the model and applications to the problem of sparse data for prediction in recommender systems." />
+<link rel="canonical" href="http://www.jefkine.com/recsys/2017/03/27/factorization-machines/" />
+<meta property="og:url" content="http://www.jefkine.com/recsys/2017/03/27/factorization-machines/" />
+<meta property="og:site_name" content="DeepGrid" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2017-03-27T01:00:02+03:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"http://www.jefkine.com/recsys/2017/03/27/factorization-machines/"},"@type":"BlogPosting","url":"http://www.jefkine.com/recsys/2017/03/27/factorization-machines/","author":{"@type":"Person","name":"Jefkine"},"headline":"Factorization Machines","dateModified":"2017-03-27T01:00:02+03:00","datePublished":"2017-03-27T01:00:02+03:00","description":"Factorization Machines. Factorization Machines (FM) the model and applications to the problem of sparse data for prediction in recommender systems.","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <title>
+    
+      Factorization Machines &middot; DeepGrid
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+
+  <!-- MathJax -->
+  <script src="https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-82905904-1', 'auto');
+  ga('require', 'linkid');
+  ga('send', 'pageview');
+
+</script>
+
+
+</head>
+
+
+  <body>
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-family: 'PT Sans'; font-size: 42px;">
+        <a href="/">
+          DeepGrid
+        </a>
+      </h1>
+      <p class="lead">Organic Deep Learning.</p>
+    </div>
+
+    <div>
+      
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 16px; color: #555">Latest Article:</p>
+        <a href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/"><strong>Vanishing And Exploding Gradient Problems</strong></a>
+        <p style="margin-top: 0px; margin-bottom: 10px;"><span style="font-size: 12px; color: #555">21 May 2018</span></p>
+      
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item" href="/">Home</a>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/about/">About</a>
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/archive/">Archive</a>
+          
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    </nav>
+
+    <p style="margin: 0px; color: #fff"><a href="https://github.com/jefkine" target="_blank">GitHub</p>
+    <p style="margin-top: 0px; margin-bottom: 10px;"><a href="https://twitter.com/jefkine" target="_blank">Twitter @jefkine</a></p>
+
+    <p>&copy; 2018. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Factorization Machines</h1>
+  <span class="post-date">Jefkine, 27 March 2017</span>
+  <h3 id="introduction">Introduction</h3>
+<p>Factorization machines were first introduced by Steffen Rendle [1] in 2010. The idea behind FMs is to model interactions between features (explanatory variables) using factorized parameters. The FM model has the ability to the estimate all interactions between features even with extreme sparsity of data.</p>
+
+<p>FMs are generic in the sense that they can mimic many different factorization models just by feature engineering. For this reason FMs combine the high-prediction accuracy of factorization models with the flexibility of feature engineering.</p>
+
+<h3 id="from-polynomial-regression-to-factorization-machines">From Polynomial Regression to Factorization Machines</h3>
+<p>In order for a recommender system to make predictions it relies on available data generated from recording of significant user events. These are records of transactions which indicate strong interest and intent for instance: downloads, purchases, ratings.</p>
+
+<p>For a movie review system which records as transaction data; what rating <script type="math/tex">r \in \lbrace 1,2,3,4,5 \rbrace</script> is given to a movie (item) <script type="math/tex">i \in I</script> by a user <script type="math/tex">u \in U</script>  at a certain time of rating <script type="math/tex">t \in \mathbb{R}</script>, the resulting dataset could be depicted as follows:</p>
+
+<p><img src="/assets/images/design_matrix.png" alt="Design Matrix" class="img-responsive" /></p>
+
+<p>If we model this as a regression problem, the data used for prediction is represented by a design matrix <script type="math/tex">X \in \mathbb{R}^{m \times n}</script> consisting of a total of <script type="math/tex">m</script> observations each made up of real valued feature vector <script type="math/tex">\mathbf{x} \in \mathbb{R}^n</script>. A feature vector from the above dataset could be represented as:</p>
+
+<p><script type="math/tex">\begin{align}
+(u,i,t) \rightarrow \mathbf{x} = (\underbrace{0,..,0,1,0,...,0}_{|U|},\underbrace{0,..,0,1,0,...,0}_{|I|},\underbrace{0,..,0,1,0,...,0}_{|T|})
+\end{align}
+\</script></p>
+
+<p>where <script type="math/tex">n = \vert U \vert + \vert I \vert + \vert T \vert</script> i.e <script type="math/tex">\mathbf{x} \in \mathbb{R}^n</script> is also represented as <script type="math/tex">\mathbf{x} \in \mathbb{R}^{\vert U \vert + \vert I \vert + \vert T \vert}</script></p>
+
+<p>This results in a supervised setting where the training dataset is organised in the form <script type="math/tex">D = \lbrace (x^{(1)}, y^{(1)}), (x^{(2)}, y^{(2)}),...(x^{(m)}, y^{(m)})\rbrace</script>. Our task is to estimate a function <script type="math/tex">\hat{y}\left( \mathbf{x} \right) : \mathbb{R}^n \ \rightarrow \mathbb{R}</script> which when provided with <script type="math/tex">i^{\text{th}}</script> row <script type="math/tex">x^{i} \in \mathbb{R}^n</script> as the input to can correctly predict the corresponding target <script type="math/tex">y^{i} \in \mathbb{R}</script>.</p>
+
+<p>Using linear regression as our model function we have the following:</p>
+
+<p><script type="math/tex">\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} \tag {1}
+\end{align}
+\</script></p>
+
+<p>Parameters to be learned from the training data</p>
+
+<ul>
+  <li><script type="math/tex">w_{0} \in \mathbb{R}</script> is the global bias</li>
+  <li><script type="math/tex">\textbf{w} \in \mathbb{R}^n</script> are the weights for feature vector <script type="math/tex">\textbf{x}_i \; \forall i</script></li>
+</ul>
+
+<p>With three categorical variables: <strong>user</strong> <script type="math/tex">u</script>, <strong>movie (item)</strong> <script type="math/tex">i</script>, and <strong>time</strong> <script type="math/tex">t</script>, applying linear regression model to this data leads to:</p>
+
+<p><script type="math/tex">\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + w_{u} + w_{i} + w_{t} \tag {2}
+\end{align}
+\</script></p>
+
+<p>This model works well and among others has the following advantages:</p>
+
+<ul>
+  <li>Can be computed in linear time <script type="math/tex">O(n)</script></li>
+  <li>Learning <script type="math/tex">\textbf{w}</script> can be cast as a convex optimization problem</li>
+</ul>
+
+<p>The major drawback with this model is that it does not handle feature interactions. The three categorical variables are learned or weighted individually. We cannot therefore capture interactions such as which <strong>user</strong>  likes or dislikes which <strong>movie (item)</strong> based on the rating they give.</p>
+
+<p>To capture this interaction, we could introduce a weight that combines both <strong>user</strong> <script type="math/tex">u</script> and <strong>movie (item)</strong> <script type="math/tex">i</script>  interaction i.e <script type="math/tex">w_{ui}</script>.</p>
+
+<p>An order <script type="math/tex">2</script> polynomial has the ability to learn a weight <script type="math/tex">w_{ij}</script> for each feature combination. The resulting model is shown below:</p>
+
+<p><script type="math/tex">\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} +  \sum_{i=1}^n \sum_{j=i+1}^n x_{i} x_{j} w_{ij} \tag {3}
+\end{align}
+\</script></p>
+
+<p>Parameters to be learned from the training data</p>
+
+<ul>
+  <li><script type="math/tex">w_{0} \in \mathbb{R}</script> is the global bias</li>
+  <li><script type="math/tex">\textbf{w} \in \mathbb{R}^n</script> are the weights for feature vector <script type="math/tex">\textbf{x}_i \; \forall i</script></li>
+  <li><script type="math/tex">\textbf{W} \in \mathbb{R}^{n \times n}</script> is the weight matrix for feature vector combination <script type="math/tex">\textbf{x}_i \textbf{x}_j \; \forall i \; \forall j</script></li>
+</ul>
+
+<p>With three categorical variables: <strong>user</strong> <script type="math/tex">u</script>, <strong>movie (item)</strong> <script type="math/tex">i</script>, and <strong>time</strong> <script type="math/tex">t</script>, applying order <script type="math/tex">2</script> polynomial regression model to this data leads to:</p>
+
+<p><script type="math/tex">\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + w_{u} + w_{i} + w_{t} + w_{ui}  + w_{ut} + w_{ti}  \tag {4}
+\end{align}
+\</script></p>
+
+<p>This model is an improvement over our previous model and among others has the following advantages:</p>
+
+<ul>
+  <li>Can capture feature interactions at least for two features at a time</li>
+  <li>Learning <script type="math/tex">\textbf{w}</script> and <script type="math/tex">\textbf{W}</script> can be cast as a convex optimization problem</li>
+</ul>
+
+<p>Even with these notable improvements over the previous model, we still are faced with some challenges including the fact that we have now ended up with a <script type="math/tex">O(n^2)</script> complexity which means that to train the model we now require more time and memory.</p>
+
+<p>A key point to note is that in most cases, datasets from recommendation systems are mostly sparse and this will adversely affect the ability to learn <script type="math/tex">\textbf{W}</script> as it depends on the feature interactions being explicitly recorded in the available dataset. From the sparse dataset, we cannot obtain enough samples of the feature interactions needed to learn <script type="math/tex">w_{ij}</script>.</p>
+
+<p>The standard polynomial regression model suffers from the fact that feature interactions have to be modeled by an independent parameter <script type="math/tex">w_{ij}</script>. <strong>Factorization machines</strong> on the other hand ensure that all interactions between pairs of features are modeled using factorized interaction parameters.</p>
+
+<p>The FM model of order <script type="math/tex">d = 2</script> is defined as follows:</p>
+
+<p><script type="math/tex">\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} + \sum_{i=1}^{n} \sum_{j=i+1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_i x_{j} \tag {5}
+\end{align}
+\</script></p>
+
+<p><script type="math/tex">\langle \cdot \;,\cdot \rangle</script> is the dot product of two feature vectors of size <script type="math/tex">k</script>:</p>
+
+<p><script type="math/tex">\begin{align}
+\langle \textbf{v}_i , \textbf{v}_{j} \rangle = \sum_{f=1}^k v_{i,f} v_{j,f}  \tag {6}
+\end{align}
+\</script></p>
+
+<p>This means that Eq. <script type="math/tex">5</script> can be written as:</p>
+
+<p><script type="math/tex">\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} + \sum_{i=1}^{n} \sum_{j=i+1}^n x_i x_{j} \sum_{f=1}^k v_{i,f} v_{j,f}  \tag {7}
+\end{align}
+\</script></p>
+
+<p>Parameters to be learned from the training data</p>
+
+<ul>
+  <li><script type="math/tex">w_{0} \in \mathbb{R}</script> is the global bias</li>
+  <li><script type="math/tex">\textbf{w} \in \mathbb{R}^n</script> are the weights for feature vector <script type="math/tex">\textbf{x}_i \; \forall i</script></li>
+  <li><script type="math/tex">\textbf{V} \in \mathbb{R}^{n \times k}</script> is the weight matrix for feature vector combination <script type="math/tex">\textbf{v}_i \textbf{v}_j \; \forall i \; \forall j</script></li>
+</ul>
+
+<p>With three categorical variables: <strong>user</strong> <script type="math/tex">u</script>, <strong>movie (item)</strong> <script type="math/tex">i</script>, and <strong>time</strong> <script type="math/tex">t</script>, applying factorization machines model to this data leads to:</p>
+
+<p><script type="math/tex">\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + w_{u} + w_{i} + w_{t} + \langle \textbf{v}_u , \textbf{v}_{i} \rangle + \langle \textbf{v}_u , \textbf{v}_{t} \rangle  + \langle \textbf{v}_t , \textbf{v}_{i} \rangle  \tag {8}
+\end{align}
+\</script></p>
+
+<p>The FM model replaces feature combination weights <script type="math/tex">w_{ij}</script> with factorized interaction parameters between pairs such that <script type="math/tex">w_{ij} \approx \langle \textbf{v}_{i}, \textbf{v}_{j} \rangle = \sum_{f=1}^k v_{i,f} v_{j,f}</script>.</p>
+
+<p>Any positive semi-definite matrix <script type="math/tex">\textbf{W} \in \mathbb{R}^{n \times n}</script> can be decomposed into <script type="math/tex">\textbf{VV}^\top</script> (e.g., <a href="https://en.wikipedia.org/wiki/Cholesky_decomposition" target="_blank">Cholesky Decomposition</a>). The FM model can express any pairwise interaction matrix <script type="math/tex">\textbf{W} = \textbf{VV}^\top</script> provided that the <script type="math/tex">k</script> chosen is reasonably large enough. <script type="math/tex">\textbf{V} \in \mathbb{R}^k</script> where <script type="math/tex">k \ll n</script> is a hyper-parameter that defines the rank of the factorization.</p>
+
+<p>The problem of sparsity nonetheless implies that the <script type="math/tex">k</script> chosen should be small as there is not enough data to estimate complex interactions <script type="math/tex">\textbf{W}</script>. Unlike in polynomial regression we cannot use the full matrix <script type="math/tex">\textbf{W}</script> to model interactions.</p>
+
+<p>FMs learn <script type="math/tex">\textbf{W} \in \mathbb{R}^{n \times n}</script> in factorized form hence the number of parameters to be estimated is reduced from <script type="math/tex">n^2</script> to <script type="math/tex">n \times k</script> since <script type="math/tex">k \ll n</script>. This reduces overfitting and produces improved interaction matrices leading to better prediction under sparsity.</p>
+
+<p>The FM model equation in Eq. <script type="math/tex">7</script> now requires <script type="math/tex">O(kn^2)</script> because all pairwise interactions have to be computed. This is an increase over the <script type="math/tex">O(n^2)</script> required in the polynomial regression implementation in Eq. <script type="math/tex">3</script>.</p>
+
+<p>With some reformulation however, we can reduce the complexity from <script type="math/tex">O(kn^2)</script> to a linear time complexity <script type="math/tex">O(kn)</script> as shown below:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+& \sum_{i=1}^n \sum_{j=i+1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_{i} x_{j} \\
+&= \frac{1}{2} \sum_{i=1}^n \sum_{j=1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_{i} x_{j} - \frac{1}{2} \sum_{i=1}^n \langle \textbf{v}_i , \textbf{v}_{i} \rangle x_{i} x_{i} \tag {A}  \\
+&= \overbrace{ \frac{1}{2}\left(\sum_{i=1}^n \sum_{j=1}^n \sum_{f=1}^k v_{i,f} v_{j,f} x_{i} x_{j} \right) }^{\bigstar} - \overbrace{\frac{1}{2}\left( \sum_{i=1}^n \sum_{f=1}^k v_{i,f} v_{i,f} x_{i} x_{i} \right) }^{\bigstar \bigstar}  \tag {B} \\
+&= \frac{1}{2}\left(\sum_{i=1}^n \sum_{j=1}^n \sum_{f=1}^k v_{i,f} v_{j,f} x_{i} x_{j}  -  \sum_{i=1}^n \sum_{f=1}^k v_{i,f} v_{i,f} x_{i} x_{i} \right) \\
+&= \frac{1}{2} \sum_{f=1}^{k} \left( \left(\sum_{i=1}^n v_{i,f}x_{i} \right) \left( \sum_{j=1}^n v_{j,f}x_{j} \right) - \sum_{i=1}^{n} v_{i,f}^2 x_{i}^2 \right) \\
+&= \frac{1}{2} \sum_{f=1}^{k} \left( \left( \sum_{i}^{n} v_{i,f}x_{i} \right)^2  - \sum_{i=1}^{n} v_{i,f}^2 x_{i}^2 \right) \tag {9}
+\end{align}
+\ %]]></script>
+
+<p>The positive semi-definite matrix <script type="math/tex">\mathbf{W} = \mathbf{VV}^\top</script> which contains the weights of pairwise feature interactions is symmetric. With symmetry, summing over different pairs is the same as summing over all pairs minus the self-interactions (divided by two). This is the reason why the value <script type="math/tex">\frac{1}{2}</script> is introduced as from Eq. <script type="math/tex">A</script> and beyond.</p>
+
+<p>Let us use some images to expound on this equations even further. For our purposes we will use a <script type="math/tex">3 \; \text{by} \; 3</script> <a href="https://en.wikipedia.org/wiki/Symmetric_matrix" target="_blank">symmetric matrix</a> from which we are expecting to end up with <script type="math/tex">\sum_{i=1}^n \sum_{j=i+1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_{i} x_{j}</script> as follows:</p>
+
+<p><img src="/assets/images/full_fm_matrix.png" alt="FM Symmetric Matrix" class="img-responsive" /></p>
+
+<p>The first part of the Eq. <script type="math/tex">B</script> marked <script type="math/tex">\bigstar</script> represents a half of the <script type="math/tex">3 \; \text{by} \; 3</script> <a href="https://en.wikipedia.org/wiki/Symmetric_matrix" target="_blank">symmetric matrix</a> as shown below:</p>
+
+<p><img src="/assets/images/fm_sum_halved.png" alt="FM Symmetric Matrix" class="img-responsive" /></p>
+
+<p>To end up with our intended summation <script type="math/tex">\sum_{i=1}^n \sum_{j=i+1}^n \langle \textbf{v}_i , \textbf{v}_{j} \rangle x_{i} x_{j}</script>, we will have to reduce the summation shown above with the second part of Eq. <script type="math/tex">B</script> marked <script type="math/tex">\bigstar \bigstar</script> as follows:</p>
+
+<p><img src="/assets/images/fm_matrix_diagonal.png" alt="FM Symmetric Matrix" class="img-responsive" /></p>
+
+<p>Substistuting Eq. <script type="math/tex">9</script> in Eq. <script type="math/tex">7</script> we end up with an equation of the form:</p>
+
+<p><script type="math/tex">\begin{align}
+\hat{y}(\textbf{x}) = w_{0} + \sum_{i=1}^{n} w_{i} x_{i} + \frac{1}{2} \sum_{f=1}^{k} \left( \left( \sum_{i}^{n} v_{i,f}x_{i} \right)^2  - \sum_{i=1}^{n} v_{i,f}^2 x_{i}^2 \right)  \tag {10}
+\end{align}
+\</script></p>
+
+<p>Eq. <script type="math/tex">10</script> now has linear complexity in both <script type="math/tex">k</script> and <script type="math/tex">n</script>. The computation complexity here is <script type="math/tex">O(kn)</script>.</p>
+
+<p>For real world problems most of the elements <script type="math/tex">x_i</script> in the feature vector <script type="math/tex">\mathbf{x}</script> are zeros. With this in mind lets go ahead and define some two quantities here:</p>
+
+<ul>
+  <li><script type="math/tex">N_z(\mathbf{x})</script> - the number of non-zero elements in feature vector <script type="math/tex">\mathbf{x}</script></li>
+  <li><script type="math/tex">N_z(\mathbf{X})</script> - the average number of none-zero elements of all vectors <script type="math/tex">\mathbf{x} \in D</script> (average for the whole dataset <script type="math/tex">D</script> or the number of non-zero elements in the design matrix <script type="math/tex">\mathbf{X}</script>)</li>
+</ul>
+
+<p>From our previous equations it is easy to see that the numerous zero values in the feature vectors will only leave us with <script type="math/tex">N_z(\mathbf{X})</script> non zero values to work with in the summation (sums over <script type="math/tex">i</script>) on Eq. <script type="math/tex">10</script> where <script type="math/tex">N_z(\mathbf{X}) \ll n</script>. This means that our complexity will drop down even further from <script type="math/tex">O(kn)</script> to <script type="math/tex">O(kN_{z}( \mathbf{X}))</script>.</p>
+
+<p>This can be seen as a much needed improvement over polynomial regression with the computation complexity of <script type="math/tex">O(N_{z}( \mathbf{X})^2)</script>.</p>
+
+<h3 id="learning-factorization-machines">Learning Factorization Machines</h3>
+<p>FMs have a closed model equation which can be computed in linear time. Three learning methods prposed in [2] are stochastic gradient descent(SGD), alternating least squares (ALS) and Markov Chain Monte Carlo (MCMC) inference.</p>
+
+<p>The model parameters to be learned are <script type="math/tex">(w_0, \mathbf{w},</script> and <script type="math/tex">\mathbf{V} )</script>. The loss function chosen will depend on the task at hand. For example:</p>
+
+<ul>
+  <li>For regression, we use least square loss: <script type="math/tex">l(\hat{y}(\textbf{x}) , y) = (\hat{y}(\textbf{x}) - y)^2</script></li>
+  <li>For binary classification, we use logit or hinge loss: <script type="math/tex">l(\hat{y}(\textbf{x}) , y) = - \ln \sigma(\hat{y}(\textbf{x}){y})</script> where <script type="math/tex">\sigma</script> is the sigmoid/logistic function and <script type="math/tex">y \in {-1,1}</script>.</li>
+</ul>
+
+<p>FMs are prone to overfitting and for this reason <script type="math/tex">L2</script> regularization is applied. Finally, the gradients of the model equation for FMs can be depicted as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial}{\partial\theta}\hat{y}(\textbf{x}) =
+\begin{cases}
+1,  & \text{if $\theta$ is $w_0$} \\
+x_i, & \text{if $\theta$ is $w_i$} \\
+x_i\sum_{j=1}^{n} v_{j,f}x_j - v_{i,f}x_{i}^2 & \text{if $\theta$ is $v_{i,f}$}
+\end{cases}
+\end{align} %]]></script>
+
+<p>Notice that the sum <script type="math/tex">\sum_{j=1}^{n} v_{j,f}x_j</script> is independent of <script type="math/tex">i</script> and thus can be precomputed. Each gradient can be computed in constant time <script type="math/tex">O(1)</script> and all parameter updates for a case <script type="math/tex">(x,y)</script> can be done in <script type="math/tex">O(kn)</script> or <script type="math/tex">O(kN_z(\mathbf{x}))</script> under sparsity.</p>
+
+<p>For a total of <script type="math/tex">i</script> iterations all the proposed learning algorithms can be said to have a runtime of <script type="math/tex">O(kN_z(\mathbf{X})i)</script>.</p>
+
+<h3 id="conclusions">Conclusions</h3>
+<p>FMs also feature some notable improvements over other models including</p>
+
+<ul>
+  <li>FMs model equation can be computed in linear time leading to fast computation of the model</li>
+  <li>FM models can work with any real valued feature vector as input unlike other models that work with restricted input data</li>
+  <li>FMs allow for parameter estimation even under very sparse data</li>
+  <li>Factorization of parameters allows for estimation of higher order interaction effects even if no observations for the interactions are available</li>
+</ul>
+
+<h3 id="references">References</h3>
+<ol>
+  <li>A Factorization Machines by Steffen Rendle - In: Data Mining (ICDM), 2010 IEEE 10th International Conference on. (2010) 995–1000 <a href="http://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf" target="_blank">[pdf]</a></li>
+  <li>Factorization machines with libfm S Rendle ACM Transactions on Intelligent Systems and Technology (TIST) 3 (3), 57 (2012) <a href="http://www.csie.ntu.edu.tw/~b97053/paper/Factorization%20Machines%20with%20libFM.pdf" target="_blank">[pdf]</a></li>
+</ol>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+  
+
+  
+
+  
+
+  
+    
+  
+
+  
+
+
+  </ul>
+</div>
+
+
+  
+<div id="disqus_thread"></div>
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://jefkine.com/recsys/2017/03/27/factorization-machines/';
+    this.page.identifier = 'Factorization Machines';
+};
+
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = '//jefkine.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+
+  </body>
+</html>

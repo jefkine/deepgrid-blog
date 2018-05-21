@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Initialization Of Feedfoward Networks | DeepGrid</title>
+<meta name="generator" content="Jekyll v3.8.1" />
+<meta property="og:title" content="Initialization Of Feedfoward Networks" />
+<meta name="author" content="Jefkine" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Mathematics Behind Neural Network Weights Initialization. Yam and Chow initialization technique utilizing cauchy’s inequality and a linear algebraic method. In this first of a three part series of posts, we will go through the weight initialization technique derived by Yam and Chow" />
+<meta property="og:description" content="Mathematics Behind Neural Network Weights Initialization. Yam and Chow initialization technique utilizing cauchy’s inequality and a linear algebraic method. In this first of a three part series of posts, we will go through the weight initialization technique derived by Yam and Chow" />
+<link rel="canonical" href="http://www.jefkine.com/deep/2016/07/27/initialization-of-feedfoward-networks/" />
+<meta property="og:url" content="http://www.jefkine.com/deep/2016/07/27/initialization-of-feedfoward-networks/" />
+<meta property="og:site_name" content="DeepGrid" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2016-07-27T20:36:02+03:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"http://www.jefkine.com/deep/2016/07/27/initialization-of-feedfoward-networks/"},"@type":"BlogPosting","url":"http://www.jefkine.com/deep/2016/07/27/initialization-of-feedfoward-networks/","author":{"@type":"Person","name":"Jefkine"},"headline":"Initialization Of Feedfoward Networks","dateModified":"2016-07-27T20:36:02+03:00","datePublished":"2016-07-27T20:36:02+03:00","description":"Mathematics Behind Neural Network Weights Initialization. Yam and Chow initialization technique utilizing cauchy’s inequality and a linear algebraic method. In this first of a three part series of posts, we will go through the weight initialization technique derived by Yam and Chow","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <title>
+    
+      Initialization Of Feedfoward Networks &middot; DeepGrid
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+
+  <!-- MathJax -->
+  <script src="https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-82905904-1', 'auto');
+  ga('require', 'linkid');
+  ga('send', 'pageview');
+
+</script>
+
+
+</head>
+
+
+  <body>
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-family: 'PT Sans'; font-size: 42px;">
+        <a href="/">
+          DeepGrid
+        </a>
+      </h1>
+      <p class="lead">Organic Deep Learning.</p>
+    </div>
+
+    <div>
+      
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 16px; color: #555">Latest Article:</p>
+        <a href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/"><strong>Vanishing And Exploding Gradient Problems</strong></a>
+        <p style="margin-top: 0px; margin-bottom: 10px;"><span style="font-size: 12px; color: #555">21 May 2018</span></p>
+      
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item" href="/">Home</a>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/about/">About</a>
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/archive/">Archive</a>
+          
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    </nav>
+
+    <p style="margin: 0px; color: #fff"><a href="https://github.com/jefkine" target="_blank">GitHub</p>
+    <p style="margin-top: 0px; margin-bottom: 10px;"><a href="https://twitter.com/jefkine" target="_blank">Twitter @jefkine</a></p>
+
+    <p>&copy; 2018. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Initialization Of Feedfoward Networks</h1>
+  <span class="post-date">Jefkine, 27 July 2016</span>
+  <div class="message">
+   <strong>Mathematics Behind Neural Network Weights Initialization - Part One: </strong>
+   In this first of a three part series of posts, we will attempt to go through the weight initialization algorithms as developed by various researchers taking into account influences derived from the evolution of neural network architecture and the activation function in particular.
+</div>
+
+<h2 id="introduction">Introduction</h2>
+<p>Weight initialization has widely been recognized as one of the most effective approaches in improving training speed of neural networks. Yam and Chow [1] worked on an algorithm for determining the optimal initial weights of feedfoward neural networks based on the Cauchy’s inequality and a linear algebraic method.</p>
+
+<p>The proposed method aimed at ensuring that the outputs of neurons existed in the <strong>active region</strong> (i.e where the derivative of the activation function has a large value) while also increasing the rate of convergence. From the outputs of the last hidden layer and the given output patterns, the optimal values of the last layer of weights are evaluated by a least-squares method.</p>
+
+<p>With the optimal initial weights determined, the initial error becomes substantially smaller and the number of iterations required to achieve the error criterion is significantly reduced.</p>
+
+<p>Yam and Chow had previously worked on other methods with this method largely seen as an improvement on earlier proposed methods [2] and [3]. In [1] the rationale behind their proposed approach was to reduce the initial network error while preventing the network from getting stuck with the initial weights.</p>
+
+<h2 id="weight-initialization-method">Weight Initialization Method</h2>
+<p>Consider a multilayer neural network with <script type="math/tex">L</script> fully interconnected layers. Layer <script type="math/tex">l</script> consists of <script type="math/tex">n_l+1</script> neurons <script type="math/tex">(l = 1,2,\dotsm,L-1)</script> in  which the last neuron is a bias node with a constant output of <script type="math/tex">1</script>.</p>
+
+<h3 id="notation">Notation</h3>
+<ol>
+  <li><script type="math/tex">l</script> is the <script type="math/tex">l^{th}</script> layer where <script type="math/tex">l=1</script> is the first layer and <script type="math/tex">l=L</script> is the last layer.</li>
+  <li><script type="math/tex">o_{i,j}^l</script> is the output vector at layer <script type="math/tex">l</script>
+$$
+\begin{align}
+o_{i,j}^{l} &amp;= \sum_{i =1}^{n_l+1} w_{i\rightarrow j}^l a_{p,i}^l
+\end{align}
+$$</li>
+  <li><script type="math/tex">w_{i\rightarrow j}^l</script> is the weight vector connecting neuron <script type="math/tex">i</script> of layer <script type="math/tex">l</script> with neuron <script type="math/tex">j</script> of layer <script type="math/tex">l+1</script>.</li>
+  <li><script type="math/tex">a^l</script> is the activated output vector for a hidden layer <script type="math/tex">l</script>.
+$$
+\begin{align}
+a_{p,j}^{l} &amp;= f(o_{p,j}^{l-1})
+\end{align}
+$$</li>
+  <li><script type="math/tex">f(x)</script> is the activation function. A sigmoid function with the range of between <script type="math/tex">0</script> and <script type="math/tex">1</script> is used as the activation function.
+$$
+\begin{align}
+f(x) = \frac{1}{1 + e^{(-x)}}
+\end{align}
+$$</li>
+  <li><script type="math/tex">P</script> is the total number of patterns for network training.</li>
+  <li><script type="math/tex">X^1</script> where <script type="math/tex">l=1</script> is the matrix of all given inputs with dimensions <script type="math/tex">P</script> rows and <script type="math/tex">n_l + 1</script> columns. All the last entries of the matrix <script type="math/tex">X^1</script> are a constant <script type="math/tex">1</script>.</li>
+  <li><script type="math/tex">W^l</script> is the weight matrix between layers <script type="math/tex">l</script> and <script type="math/tex">l+1</script>.</li>
+  <li><script type="math/tex">A^L</script> is the matrix representing all entries of the last output layer <script type="math/tex">L</script> given by
+$$
+\begin{align}
+a_{p,j}^L &amp;= f(o_{p,j}^{L-1})
+\end{align}
+$$</li>
+  <li><script type="math/tex">T</script> is the matrix of all the targets with dimensions <script type="math/tex">P</script> rows and <script type="math/tex">n_L</script> columns.</li>
+</ol>
+
+<p>The output of all hidden layers and the output layer are obtained by propagating the training patterns through the network.</p>
+
+<p>Learning will then be achieved by adjusting the weights such that <script type="math/tex">A^L</script> is as close as possible or equals to <script type="math/tex">T</script>.</p>
+
+<p>In the classical back-propagation algorithm, the weights are changed according to the gradient descent direction of an error surface <script type="math/tex">E</script> (taken on the output units over all the <script type="math/tex">P</script> patterns) using the following formula:
+$$
+\begin{align}
+E_p &amp;= \sum_{p =1}^P \left( \frac{1}{2} \sum_{j}^{n_L}\left(t_{p,j} - a_{p,j}\right)^2 \right)
+\end{align}
+$$</p>
+
+<p>Hence, the error gradient of the weight matrix <script type="math/tex">w_{i\rightarrow j}</script> is:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial E_p}{\partial w_{i\rightarrow j}^l} &= \frac{\partial E_p}{\partial o_{i,j}^{l}} \frac{\partial o_{i,j}^{l}}{\partial w_{i\rightarrow j}^l} \\
+&= \delta^{l}_{p,j} \frac{\partial}{\partial w_{i\rightarrow j}^{l}} w_{i\rightarrow j}^{l} a_{p,i}^{l} \\
+&= \delta^{l}_{p,j} a_{p,i}^{l}
+\end{align} %]]></script>
+
+<p>If the standard sigmoid function with a range between 0 and 1 is used, the rule of changing the weights cane be shown to be:
+$$
+\begin{align}
+  \Delta w_{i,j}^l =&amp;\ -\frac{\eta}{P} \sum_{p =1}^P \delta_{p,j}^{l}a_{p,i}^{l}
+\end{align}
+$$
+where <script type="math/tex">\eta</script> is the learning rate (or rate of gradient descent)</p>
+
+<p>The error gradient of the input vector at a layer <script type="math/tex">l</script> is defined as
+$$
+\begin{align}
+\delta_{p,j}^l = \frac{\partial E_p}{\partial o_{p,j}^l}
+\end{align}
+$$</p>
+
+<p>The error gradient of the input vector at the last layer <script type="math/tex">l = L - 1</script> is</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\delta_{p,j}^{L-1} &= \frac{\partial E_p}{\partial o_{p,j}^{L-1}} \\
+&= \frac{\partial}{\partial o_{p,j}^{L-1}} \frac{1}{2}(t_{p,j} - a_{p,j}^L)^2 \\
+&= \left( \frac{\partial}{\partial a_{p,j}^{L}} \frac{1}{2}(t_{p,j} - a_{p,j}^L)^2 \right) \frac{\partial a_{p,j}^{L}}{\partial o_{p,j}^{L-1}} \\
+&= (t_{p,j} - a_{p,j}^L) \frac{\partial f(o_{p,j}^{L-1})}{\partial o_{p,j}^{L-1}} \\
+&= (t_{p,j} - a_{p,j}^L) f'(o_{p,j}^{L-1}) \tag 1
+\end{align} %]]></script>
+
+<p>Derivative of a sigmoid <script type="math/tex">f'(o^{L-1}) = f(o^{L-1})(1 - f(o^{L-1}))</script>. This result can be substituted in equation <script type="math/tex">(1)</script> as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\delta_{p,j}^{L-1} &= (t_{p,j} - a_{p,j}^L)f(o_{p,j}^{L-1})(1 - f(o_{p,j}^{L-1})) \\
+&= (t_{p,j} - a_{p,j}^L)a_{p,j}^L(1 - a_{p,j}^L) \tag 2
+\end{align} %]]></script>
+
+<p>For the other layers i.e <script type="math/tex">l = 1,2,\dotsm,L-2</script>, the scenario is such that multiple weighted outputs from previous the layer <script type="math/tex">l-1</script> lead to a unit in the current layer <script type="math/tex">l</script> yet again multiple outputs.</p>
+
+<p>The weight <script type="math/tex">w_{j\rightarrow k}^{l+1}</script> connects neurons <script type="math/tex">j</script> and <script type="math/tex">k</script>, the sum of the weighed inputs from neuron <script type="math/tex">j</script> is denoted by <script type="math/tex">k\in\text{outs}(j)</script> where <script type="math/tex">k</script> iterates over all neurons connected to <script type="math/tex">j</script></p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\delta_{p,j}^l &= \frac{\partial E_p}{\partial o_{p,j}^l} \\
+&= \frac{\partial E_p}{\partial o_{j,k}^{l+1}} \frac{\partial o_{j,k}^{l+1}}{\partial o_{p,j}^l} \\
+&= \delta_{p,k}^{l+1} \frac{\partial o_{j,k}^{l+1}}{\partial o_{p,j}^l} \\
+&= \delta_{p,k}^{l+1} \frac{\partial w_{j\rightarrow k}^{l+1} a_{p,j}^{l+1}}{\partial o_{p,j}^l} \\
+&= \delta_{p,k}^{l+1} \frac{\partial w_{j\rightarrow k}^{l+1} a_{p,j}^{l+1}}{\partial a_{p,j}^{l+1}} \frac{\partial a_{p,j}^{l+1}}{\partial o_{p,j}^l} \\
+&= \delta_{p,k}^{l+1} \frac{\partial w_{j\rightarrow k}^{l+1} a_{p,j}^{l+1}}{\partial a_{p,j}^{l+1}} \frac{\partial f(o_{p,j}^l)}{\partial o_{p,j}^l} \\
+&= \frac{\partial f(o_{p,j}^l)}{\partial o_{p,j}^l} \sum_{k\in\text{outs}(j)} \delta_{p,k}^{l+1} \frac{\partial }{\partial a_{p,j}^{l+1}}w_{j\rightarrow k}^{l+1} a_{p,j}^{l+1}  \\
+&= f'(o_{p,j}^l) \sum_{k\in\text{outs}(j)} \delta_{p,k}^{l+1} w_{j\rightarrow k}^{l+1} \tag 3
+\end{align} %]]></script>
+
+<p>Derivative of a sigmoid <script type="math/tex">f'(o^{l}) = f(o^{l})(1 - f(o^{l}))</script>. This result can be substituted in equation <script type="math/tex">(3)</script> as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\delta_{p,j}^l &= f(o_{p,j}^{l})(1 - f(o_{p,j}^{l})) \sum_{k\in\text{outs}(j)} \delta_{p,k}^{l+1} w_{j\rightarrow k}^{l+1} \\
+&= a_{p,j}^{l+1}(1 - a_{p,j}^{l+1}) \sum_{k\in\text{outs}(j)} \delta_{p,k}^{l+1} w_{j\rightarrow k}^{l+1} \tag 4
+\end{align} %]]></script>
+
+<p>From Eqns. <script type="math/tex">(2)</script> and <script type="math/tex">(4)</script>, we can observe that the change in weight depends on outputs of neurons connected to it. When outputs of neurons are <script type="math/tex">0</script> or <script type="math/tex">1</script>, the derivative of the activation function evaluated at this value is zero. This means there will be no weight change at all even if there is a difference between the value of the target and the actual output.</p>
+
+<p>The magnitudes required to ensure that the outputs of the hidden units are in the active region and are derived by solving the following problem:
+$$
+\begin{align}
+1 - \overline{t} \leq a_{p,j}^{l+1} \leq \overline{t} \tag 6
+\end{align}
+$$</p>
+
+<p>A sigmoid function also has the <a href="https://en.wikipedia.org/wiki/Logistic_function" target="_blank">property</a> <script type="math/tex">f(1 - x) = f(-x)</script>  which means Eqn <script type="math/tex">(6)</script> can also be written as:
+$$
+\begin{align}
+-\overline{t} \leq a_{p,j}^{l+1} \leq \overline{t} \tag 7
+\end{align}
+$$</p>
+
+<p>Taking the inverse of Eqn<script type="math/tex">(7)</script> such that <script type="math/tex">f^{-1}(\overline{t}) = s</script> and <script type="math/tex">f^{-1}(a_{p,j}^{l+1}) = o_{p,j}^{l}</script> results in
+$$
+\begin{align}
+-\overline{s} \leq o_{p,j}^{l} \leq \overline{s} \tag 8
+\end{align}
+$$</p>
+
+<p>The active region is then assumed to be the region in which the derivative of the activation function is greater than <script type="math/tex">4%</script> of the maximum derivative, i.e.
+$$
+\begin{align}
+\overline{s} \approx 4.59 \qquad \text{for the standard sigmoid function} \tag {9a}
+\end{align}
+$$</p>
+
+<p>and
+$$
+\begin{align}
+\overline{s} \approx 2.29 \qquad \text{for the hyperbolic tangent function} \tag {9b}
+\end{align}
+$$</p>
+
+<p>Eqn<script type="math/tex">(8)</script> can then be simplified to
+$$
+\begin{align}
+(o_{p,j}^{l})^2 \leq \overline{s}^2 \qquad or \qquad \left(\sum_{i =1}^{n_l+1} a_{p,i}^{l} w_{i,j}^{l} \right)^2 \leq \overline{s}^2 \tag {10}
+\end{align}
+$$</p>
+
+<p>By Cauchy’s inequality,
+$$
+\begin{align}
+\left(\sum_{i =1}^{n_l+1} a_{p,i}^{l} w_{i,j}^{l} \right)^2 \quad  \leq \quad  \sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2 \sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \tag {11}
+\end{align}
+$$</p>
+
+<p>Consequently, Eqn<script type="math/tex">(10)</script> is replaced by
+$$
+\begin{align}
+\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2 \sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \leq \overline{s}^2 \tag {12}
+\end{align}
+$$</p>
+
+<p>If <script type="math/tex">n_l</script> is a large number and if the weights are values between <script type="math/tex">-\theta_p^l</script> to  <script type="math/tex">\theta_p^l</script> with zero mean independent identical distributions, the general weight formula becomes:
+$$
+\begin{align}
+\sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \approx \left\lgroup
+\matrix{number\cr of\cr weights}
+\right\rgroup  * \left\lgroup
+\matrix{variance\cr of\cr weights}
+\right\rgroup \tag {13}
+\end{align}
+$$</p>
+
+<p>For uniformly distributed sets of weights <script type="math/tex">w^l \overset{iid}{\sim} U \left[ -\theta_p^l, \theta_p^l \right]</script> we apply the formula <script type="math/tex">\left\{ x \sim U[a,b] \implies Var[x] = \frac{(b-a)^2}{12} \right\}</script> for <a href="http://math.stackexchange.com/questions/728059/prove-variance-in-uniform-distribution-continuous" target="_blank">variance of a uniform distribution</a>, and subsequently show that.</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Var[w^l] &= \frac{(2\theta_p^l)^2}{12} \\
+Var[w^l] &= \frac{(\theta_p^l)^2}{3}
+\end{align} %]]></script>
+
+<p>This can then be used in the next Eqn as:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \quad \approx (n_l+1) * \frac{(\theta_p^l)^2}{3} \quad \approx \frac{(n_l+1)}{3}(\theta_p^l)^2 \tag {14}
+\end{align}</script>
+
+<p>By substituting Eqn<script type="math/tex">(14)</script> into <script type="math/tex">(12)</script></p>
+
+<script type="math/tex; mode=display">\begin{align}
+\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2 \frac{(n_l+1)}{3}(\theta_p^l)^2 \leq \overline{s}^2 \\[2ex]
+(\theta_p^l)^2 \leq \overline{s}^2 \left[\frac{3}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}\right] \\[2ex]
+\theta_p^l \leq \overline{s}\sqrt{\frac{3}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}} \tag {15}
+\end{align}</script>
+
+<p>For sets of weights with normal distribution <script type="math/tex">w^l \overset{iid}{\sim} \mathcal N (0,(\theta_p^l)^2)</script> and <script type="math/tex">n_l</script> is a large number, <script type="math/tex">\left\{\sigma^2 = (\theta_p^l)^2 \implies Var[w^l] = (\theta_p^l)^2 \right\}</script>
+$$
+\begin{align}
+\sum_{i =1}^{n_l+1} (w_{i,j}^{l} )^2 \quad \approx (n_l+1) * (\theta_p^l)^2 \quad \approx \frac{(n_l+1)}{1}(\theta_p^l)^2 \tag {16}
+\end{align}
+$$</p>
+
+<p>By substituting Eqn<script type="math/tex">(16)</script> into <script type="math/tex">(12)</script></p>
+
+<script type="math/tex; mode=display">\begin{align}
+\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2 \frac{(n_l+1)}{1}(\theta_p^l)^2 \leq \overline{s}^2 \\[2ex]
+(\theta_p^l)^2 \leq \overline{s}^2 \left[\frac{1}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}\right] \\[2ex]
+\theta_p^l \leq \overline{s}\sqrt{\frac{1}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}} \tag {17}
+\end{align}</script>
+
+<p>In the proposed algorithm therefore, the magnitude of weights <script type="math/tex">\theta_p^l</script> for pattern <script type="math/tex">p</script> is chosen to be:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\theta_p^l \leq
+\begin{cases}
+\overline{s}\sqrt{\frac{3}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}}, & \text{for weights with uniform distribution} \\[2ex]
+\overline{s}\sqrt{\frac{1}{(n_l+1)\left(\sum_{i =1}^{n_l+1} (a_{p,i}^{l})^2\right)}}, & \text{for weights with normal distribution}
+\end{cases} \tag{18}
+\end{align} %]]></script>
+
+<p>For different input patterns, the values of <script type="math/tex">\theta_p^l</script> are different, To make sure the outputs of hidden neurons are in the active region for all patterns, the following value is selected
+$$
+\begin{align}
+\theta^l &amp;= \min_{\rm p=1,\dotsm,P}(\theta_p^l) \tag{19}
+\end{align}
+$$</p>
+
+<p>Deep networks using of sigmiod activation functions exhibit the challenge of exploding or vanishing activations and gradients. The diagram below gives us a perspective of how this occurs.</p>
+
+<p><img src="/assets/images/active-region.png" alt="active region" class="img-responsive" /></p>
+
+<ul>
+  <li>When the parameters are too large - the activations become larger and larger (i.e tend to exist in the red region above), then your activations will saturate and become meaningless, with gradients approaching <script type="math/tex">0</script>.</li>
+  <li>When the parameters are too small - the activations keep dropping layer after layer (i.e tend to exist in the green region above). At levels closer to zero the sigmoid activation function become more linear. Gradually the non-linearity is lost with derivatives of constants being <script type="math/tex">0</script> and hence no benefit of multiple layers.</li>
+</ul>
+
+<h3 id="summary-procedure-of-the-weight-initialization-algorithm">Summary Procedure of The Weight Initialization Algorithm</h3>
+
+<ol>
+  <li>Evaluate <script type="math/tex">\theta^1</script> using the input training patterns by applying Eqns <script type="math/tex">(18)</script> and <script type="math/tex">(19)</script> with <script type="math/tex">l =1</script></li>
+  <li>The weights <script type="math/tex">w_{i\rightarrow j}^1</script> are initialized by a random number generator with uniform distribution between <script type="math/tex">-\theta^1</script> to <script type="math/tex">\theta^1</script> or normal distribution <script type="math/tex">\mathcal N (0,(\theta_p^l)^2)</script></li>
+  <li>Evaluate <script type="math/tex">a_{p,i}^2</script> by feedforwarding the input patterns through the network using <script type="math/tex">w_{i\rightarrow j}^1</script></li>
+  <li>For <script type="math/tex">l = 1,2,\dotsm,L-2</script>
+    <ul>
+      <li>Evaluate <script type="math/tex">\theta^1</script> using the outputs of layer <script type="math/tex">l</script>, i.e <script type="math/tex">a_{p,i}^l</script> and applying Eqns <script type="math/tex">(18)</script> and <script type="math/tex">(19)</script></li>
+      <li>The weights <script type="math/tex">w_{i\rightarrow j}^1</script> are initialized by a random number generator with uniform distribution between <script type="math/tex">-\theta^l</script> to <script type="math/tex">\theta^l</script> or normal distribution <script type="math/tex">\mathcal N (0,(\theta_p^l)^2)</script></li>
+      <li>Evaluate <script type="math/tex">a_{p,i}^{l+1}</script> by feedforwarding the outputs of <script type="math/tex">a_{p,i}^{l}</script>  through the network using <script type="math/tex">w_{i\rightarrow j}^l</script></li>
+    </ul>
+  </li>
+  <li>
+    <p>After finding <script type="math/tex">a_{p,i}^{L-1}</script> or <script type="math/tex">A^{L-1}</script>, we can find the last layer of weights <script type="math/tex">W^{L-1}</script> by solving the following equation using a least-squares method,
+$$
+\begin{align}
+\Vert A^{L-1}W^{L-1} - S \Vert_2 \tag{20}
+\end{align}
+$$</p>
+
+    <ul>
+      <li>
+        <p><script type="math/tex">S</script> is a matrix, which has entries,
+$$
+\begin{align}
+s_{i,j} = f^{-1}(t_{i,j}) \tag{21}
+\end{align}
+$$</p>
+      </li>
+      <li>
+        <p>where <script type="math/tex">t_{i,j}</script> are the entries of target matrix <script type="math/tex">T</script>.</p>
+      </li>
+    </ul>
+  </li>
+</ol>
+
+<p>The weight initialization process is then completed. The linear least-squares problem shown in Eqn<script type="math/tex">(20)</script> can be solved by QR factorization using  Householder reflections [4].</p>
+
+<p>In the case of an overdetermined system, QR factorization produces a solution that is the best approximation in a least-squares sense. In the case of an under-determined system, QR factorization computes the minimal-norm solution.</p>
+
+<h3 id="conclusions">Conclusions</h3>
+<p>In general the proposed algorithm with uniform distributed weights performs better than the algorithm with normal distributed weights. The proposed algorithm is also applicable to networks with different activation functions.</p>
+
+<p>It is worth noting that the time required for the initialization process is negligible when compared with training process.</p>
+
+<h3 id="references">References</h3>
+<ol>
+  <li>A weight initialization method for improving training speed in feedforward neural network Jim Y.F. Yam, Tommy W.S. Chow
+ (1998) <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.8140&amp;rep=rep1&amp;type=pdf" target="_blank">[pdf]</a></li>
+  <li>Y.F. Yam, T.W.S. Chow, Determining initial weights of feedforward neural networks based on least-squares method, Neural Process. Lett. 2 (1995) 13-17.</li>
+  <li>Y.F. Yam, T.W.S. Chow, A new method in determining the initial weights of feedforward neural
+networks, Neurocomputing 16 (1997) 23-32.</li>
+  <li>G.H. Golub, C.F. Van Loan, Matrix Computations, The Johns Hopkins University Press, Baltimore,
+MD, 1989</li>
+</ol>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+  
+    
+      <li>
+        <h3>
+          <a href="http://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/">
+            Initialization Of Deep Networks Case of Rectifiers
+            <small>08 Aug 2016</small>
+          </a>
+        </h3>
+      </li>
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  </ul>
+</div>
+
+
+  
+<div id="disqus_thread"></div>
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://jefkine.com/deep/2016/07/27/initialization-of-feedfoward-networks/';
+    this.page.identifier = 'Initialization Of Feedfoward Networks';
+};
+
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = '//jefkine.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+
+  </body>
+</html>

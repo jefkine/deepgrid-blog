@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Initialization Of Deep Networks Case of Rectifiers | DeepGrid</title>
+<meta name="generator" content="Jekyll v3.8.1" />
+<meta property="og:title" content="Initialization Of Deep Networks Case of Rectifiers" />
+<meta name="author" content="Jefkine" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Mathematics Behind Neural Network Weights Initialization. The case of ReLu (Rectified Linear units). In this third of a three part series of posts, we will go through the weight initialization technique devised by Kaiming He, et al" />
+<meta property="og:description" content="Mathematics Behind Neural Network Weights Initialization. The case of ReLu (Rectified Linear units). In this third of a three part series of posts, we will go through the weight initialization technique devised by Kaiming He, et al" />
+<link rel="canonical" href="http://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/" />
+<meta property="og:url" content="http://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/" />
+<meta property="og:site_name" content="DeepGrid" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2016-08-08T16:36:02+03:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"http://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/"},"@type":"BlogPosting","url":"http://www.jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/","author":{"@type":"Person","name":"Jefkine"},"headline":"Initialization Of Deep Networks Case of Rectifiers","dateModified":"2016-08-08T16:36:02+03:00","datePublished":"2016-08-08T16:36:02+03:00","description":"Mathematics Behind Neural Network Weights Initialization. The case of ReLu (Rectified Linear units). In this third of a three part series of posts, we will go through the weight initialization technique devised by Kaiming He, et al","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <title>
+    
+      Initialization Of Deep Networks Case of Rectifiers &middot; DeepGrid
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+
+  <!-- MathJax -->
+  <script src="https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-82905904-1', 'auto');
+  ga('require', 'linkid');
+  ga('send', 'pageview');
+
+</script>
+
+
+</head>
+
+
+  <body>
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-family: 'PT Sans'; font-size: 42px;">
+        <a href="/">
+          DeepGrid
+        </a>
+      </h1>
+      <p class="lead">Organic Deep Learning.</p>
+    </div>
+
+    <div>
+      
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 16px; color: #555">Latest Article:</p>
+        <a href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/"><strong>Vanishing And Exploding Gradient Problems</strong></a>
+        <p style="margin-top: 0px; margin-bottom: 10px;"><span style="font-size: 12px; color: #555">21 May 2018</span></p>
+      
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item" href="/">Home</a>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/about/">About</a>
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/archive/">Archive</a>
+          
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    </nav>
+
+    <p style="margin: 0px; color: #fff"><a href="https://github.com/jefkine" target="_blank">GitHub</p>
+    <p style="margin-top: 0px; margin-bottom: 10px;"><a href="https://twitter.com/jefkine" target="_blank">Twitter @jefkine</a></p>
+
+    <p>&copy; 2018. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Initialization Of Deep Networks Case of Rectifiers</h1>
+  <span class="post-date">Jefkine, 8 August 2016</span>
+  <div class="message">
+   <strong>Mathematics Behind Neural Network Weights Initialization - Part Three: </strong>
+   In this third of a three part series of posts, we will attempt to go through the weight initialization algorithms as developed by various researchers taking into account influences derived from the evolution of neural network architecture and the activation function in particular.
+</div>
+
+<h2 id="introduction">Introduction</h2>
+<p>Recent success in deep networks can be credited to the use of non-saturated activation function Rectified Linear unit (RReLu) which has replaced its saturated counterpart (e.g. sigmoid, tanh). Benefits associated with the ReLu activation function include:</p>
+
+<ul>
+  <li>Ability to mitigate the exploding or vanishing gradient problem; this largely due to the fact that for all inputs into the activation function of values grater than <script type="math/tex">0</script>, the gradient is always <script type="math/tex">1</script> (constant gradient)</li>
+  <li>The constant gradient of ReLu activations results in faster learning. This helps expedite convergence of the training procedure yielding better better solutions than sigmoidlike units</li>
+  <li>Unlike the sigmoidlike units (such as sigmoid or tanh activations) ReLu activations does not involve computing of an an exponent which is a factor that results to a faster training and evaluation times.</li>
+  <li>Producing sparse representations with true zeros. All inputs into the activation function of values less than or equal to <script type="math/tex">0</script>, results in an output value of <script type="math/tex">0</script>. Sparse representations are considered more valuable</li>
+</ul>
+
+<p>Xavier and Bengio (2010) [2] had earlier on proposed the “Xavier” initialization, a method whose derivation was based on the assumption that the activations are linear. This assumption however is invalid for ReLu and PReLu. He, Kaiming, et al. 2015 [1] later on derived a robust initialization method that particularly considers the rectifier nonlinearities.</p>
+
+<p>In this article we discuss the algorithm put forward by He, Kaiming, et al. 2015 [1].</p>
+
+<h3 id="notation">Notation</h3>
+<ol>
+  <li><script type="math/tex">k</script> is the side length of a convolutional kernel. (also the spatial filter size of the layer)</li>
+  <li><script type="math/tex">c</script> is the channel number. (also input channel)</li>
+  <li><script type="math/tex">n</script> is the number of connections of a response (<script type="math/tex">n = k \times k \times c \implies k^2c</script>)</li>
+  <li><script type="math/tex">\mathbf{x}</script> is the co-located <script type="math/tex">k \times k</script> pixels in <script type="math/tex">c</script> inputs channels. (<script type="math/tex">\mathbf{x} = (k^2c) \times 1</script>)</li>
+  <li><script type="math/tex">W</script> is the matrix where <script type="math/tex">d</script> is the total number number of filters. Every row of <script type="math/tex">W</script> i.e <script type="math/tex">(d_1,d_2,\dotsb,d_d)</script> represents the weights of a filter. (<script type="math/tex">W = d \times n</script>)</li>
+  <li><script type="math/tex">\mathbf{b}</script> is the vector of biases.</li>
+  <li><script type="math/tex">\mathbf{y}</script> is the response pixel of the output map</li>
+  <li><script type="math/tex">l</script> is used to index the layers</li>
+  <li><script type="math/tex">f(\cdot)</script> is the activation function</li>
+  <li><script type="math/tex">\mathbf{x} = f(\mathbf{y}_{l-1}) \</script></li>
+  <li><script type="math/tex">c = d_{l-1} \</script></li>
+  <li><script type="math/tex">\mathbf{y}_l = W_l\mathbf{x}_l+\mathbf{b}_l \</script></li>
+</ol>
+
+<h3 id="forward-propagation-case">Forward Propagation Case</h3>
+<p>Considerations made here include:</p>
+
+<ul>
+  <li>The initialized elements in <script type="math/tex">W_l</script> be mutually independent and share the same distribution.</li>
+  <li>The elements in <script type="math/tex">\mathbf{x}_l</script> are mutually independent and share the same distribution.</li>
+  <li><script type="math/tex">\mathbf{x}_l</script> and <script type="math/tex">W_l</script> are independent of each other.</li>
+</ul>
+
+<p>The variance of <script type="math/tex">y_l</script> can be given by:
+$$
+\begin{align}
+Var[y_l] &amp;= n_lVar[w_lx_l], \tag 1
+\end{align}
+$$</p>
+
+<p>where <script type="math/tex">y_l, w_l, x_l</script> represent random variables of each element in <script type="math/tex">\mathbf{y}_l, W_l, \mathbf{x}_l</script>. Let <script type="math/tex">w_l</script> have a zero mean, then the variance of the product of independent variables gives us:
+$$
+\begin{align}
+Var[y_l] &amp;= n_lVar[w_l]E[x^2_l]. \tag 2
+\end{align}
+$$</p>
+
+<p>Lets look at how the Eqn. <script type="math/tex">(2)</script> above is arrived at:-</p>
+
+<p>For random variables <script type="math/tex">\mathbf{x}_l</script> and <script type="math/tex">W_l</script>, independent of each other, we can use basic properties of expectation to show that:
+$$
+\begin{align}
+Var[w_lx_l] &amp;= E[w^2_l]E[x^2_l]  - \overbrace{ \left[ E[x_l]\right]^2 \left[ E[w_l]\right]^2 }^{ \bigstar } , \tag {A}
+\end{align}
+$$</p>
+
+<p>From Eqn. <script type="math/tex">(2)</script> above, we let <script type="math/tex">w_l</script> have a zero mean <script type="math/tex">\implies E[w_l] = \left[E[w_l]\right]^2 = 0</script>. This means that in Eqn. <script type="math/tex">(A)</script>, <script type="math/tex">\bigstar</script> evaluates to zero. We are then left with:
+$$
+\begin{align}
+Var[w_lx_l] &amp;= E[w^2_l]E[x^2_l], \tag {B}
+\end{align}
+$$</p>
+
+<p>Using the formula for <a href="https://en.wikipedia.org/wiki/Variance#Definition" target="_blank">variance</a> <script type="math/tex">Var[w_l] = E[w^2_l] -\left[E[w_l]\right]^2</script> and the fact that <script type="math/tex">E[w_l] = 0</script>  we come to the conclusion that <script type="math/tex">Var[w_l] = E[w^2_l]</script>.</p>
+
+<p>With this conclusion we can replace <script type="math/tex">E[w^2_l]</script> in Eqn. <script type="math/tex">(B)</script> with <script type="math/tex">Var[w_l]</script> to obtain the following Eqn.:
+$$
+\begin{align}
+Var[w_lx_l] &amp;= Var[w_l]E[x^2_l], \tag {C}
+\end{align}
+$$</p>
+
+<p>By substituting Eqn. <script type="math/tex">(C)</script> into Eqn. <script type="math/tex">(1)</script> we obtain:
+$$
+\begin{align}
+Var[y_l] &amp;= n_lVar[w_l]E[x^2_l]. \tag 2
+\end{align}
+$$</p>
+
+<p>In Eqn. <script type="math/tex">(2)</script> it is well worth noting that <script type="math/tex">E[x^2_l]</script> is the expectation of the square of <script type="math/tex">x_l</script> and cannot resolve to <script type="math/tex">Var[x_l]</script> i.e <script type="math/tex">E[x^2_l] \neq Var[x_l]</script> as we did above for <script type="math/tex">w_l</script> unless <script type="math/tex">x_l</script> has zero mean.</p>
+
+<p>The effect of ReLu activation is such that <script type="math/tex">x_l = max(0, y_{l-1})</script> and thus it does not have zero mean. For this reason the conclusion here is different compared to the initialization style in [2].</p>
+
+<p>We can also observe here that despite the mean of <script type="math/tex">x_l</script> i.e <script type="math/tex">E[x_l]</script> being non zero, the product of the two means <script type="math/tex">E[x_l]</script> and <script type="math/tex">E[w_l]</script> will lead to a zero mean since <script type="math/tex">E[w_l] = 0</script> as shown in the Eqn. below:
+$$
+\begin{align}
+E[y_l] &amp;= E[w_lx_l] = E[x_l]E[w_l] = 0.
+\end{align}
+$$</p>
+
+<p>If we let <script type="math/tex">w_{l-1}</script> have a symmetric distribution around zero and <script type="math/tex">b_{l-1} = 0</script>, then from our observation above <script type="math/tex">y_{l-1}</script> has zero mean and a symmetric distribution around zero. This leads to <script type="math/tex">E[x^2_l] = \frac{1}{2}Var[y_{l-1}]</script> when <script type="math/tex">f(\cdot)</script> is ReLu. Putting this in Eqn. <script type="math/tex">(2)</script>, we obtain:
+$$
+\begin{align}
+Var[y_l] &amp;= n_lVar[w_l]\frac{1}{2}Var[y_{l-1}]. \tag 3
+\end{align}
+$$</p>
+
+<p>With <script type="math/tex">L</script> layers put together, we have:
+$$
+\begin{align}
+Var[y_L] &amp;= Var[y_1]\left( \prod_{l=1}^L \frac{1}{2}n_lVar[w_l] \right). \tag 4
+\end{align}
+$$</p>
+
+<p><strong>The product in Eqn. <script type="math/tex">\mathbf{(4)}</script> is key to the initialization design.</strong></p>
+
+<p>Lets take some time to explain the effect of ReLu activation as seen in Eqn. <script type="math/tex">(3)</script>.</p>
+
+<p><img src="/assets/images/relus.png" alt="ReLu Family" class="img-responsive" /></p>
+
+<p>For the family of rectified linear (ReL) shown illustrated in the diagram above, we have a generic activation function defined as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+f(y_i) =
+\begin{cases}
+y_i,  & \text{if} \, y_i \gt 0 \\
+a_iy_i, & \text{if} \, y_i \le 0
+\end{cases} \tag {5}
+\end{align} %]]></script>
+
+<p>In the activation function <script type="math/tex">(5)</script> above, <script type="math/tex">y_i</script> is the input of the nonlinear activation <script type="math/tex">f</script> on the <script type="math/tex">i</script>th channel, and <script type="math/tex">a_i</script> is the coefficient controlling the slope of the negative part. <script type="math/tex">i</script> in <script type="math/tex">a_i</script> indicates that we allow the nonlinear activation to vary on different channels.</p>
+
+<p>The variations of rectified linear (ReL) take the following forms:</p>
+
+<ol>
+  <li><strong>ReLu</strong>: obtained when <script type="math/tex">a_i = 0</script>. The resultant activation function is of the form <script type="math/tex">f(y_i) = max(0,y_i)</script></li>
+  <li><strong>PReLu</strong>:  Parametric ReLu - obtained when <script type="math/tex">a_i</script> is a learnable parameter. The resultant activation function is of the form <script type="math/tex">f(y_i) = max(0,y_i) + a_i min(0,y_i)</script></li>
+  <li><strong>LReLu</strong>: Leaky ReLu - obtained when <script type="math/tex">a_i = 0.01</script> i.e when <script type="math/tex">a_i</script> is a small and fixed value [3]. The resultant activation function is of the form <script type="math/tex">f(y_i) = max(0,y_i) + 0.01 min(0,y_i)</script></li>
+  <li><strong>RReLu</strong>: Randomized Leaky ReLu - the randomized version of leaky ReLu, obtained when <script type="math/tex">a_{ji}</script> is a random number
+sampled from a uniform distribution <script type="math/tex">U(l,u)</script> i.e <script type="math/tex">% <![CDATA[
+a_{ji} \, U \sim (l, u); \, l < u \, \text{and} \, l, u \in [0; 1) %]]></script>. See [4].</li>
+</ol>
+
+<p>Rectifier activation function is simply a threshold at zero hence allowing the network to easily obtain sparse representations. For example, after uniform initialization of the weights, around <script type="math/tex">50\%</script> of hidden units continuous output values are real zeros, and this fraction can easily increase with sparsity-inducing regularization [5].</p>
+
+<p>Take signal <script type="math/tex">y_i = W_ix+b,</script> (visualize the signal represented on a bi-dimensional space <script type="math/tex">y_i \in \mathbb{R}^2</script>). Applying the rectifier activation function to this signal i.e <script type="math/tex">f(y_i)</script> where <script type="math/tex">f</script> is ReLu results in a scenario where signals existing in regions where <script type="math/tex">y_i \lt 0</script> are squashed to <script type="math/tex">0</script>, while those existing in regions where <script type="math/tex">y_i \gt 0</script> remain unchanged.</p>
+
+<p>The ReLu effect results in <em>“aggressive data compression”</em> where information is lost (replaced by real zeros values). A remedy for this would be the PReLu and LReLu implementations which provides an axle shift that adds a slope <script type="math/tex">a_i</script> to the negative section ensuring from the data some information is retained rather than reduced to zero. Both PReLu and LReLu represented by variations of <script type="math/tex">f(y_i) = max(0,y_i) + a_i min(0,y_i)</script>, make use of the factor <script type="math/tex">a_i</script> which serves as the component used to retain some information.</p>
+
+<p>Using ReLu activation function function therefore, only the positive half axis values are obtained hence:</p>
+
+<p><script type="math/tex">% <![CDATA[
+\begin{align}
+E[x^2_l] &= \frac{1}{2}Var[y_{l-1}] \tag 6
+\end{align}
+\ %]]></script></p>
+
+<p>Putting this in Eqn. <script type="math/tex">(2)</script>, we obtain our Eqn. <script type="math/tex">(3)</script> as above:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Var[y_l] &= n_lVar[w_l]\frac{1}{2}Var[y_{l-1}] \tag {3a} \\
+&= \frac{1}{2}n_lVar[w_l]Var[y_{l-1}] \tag {3b}
+\end{align} %]]></script>
+
+<p>Note that a proper initialization method should avoid reducing and magnifying the magnitudes of input signals exponentially. For this reason we expect the product in Eqn. <script type="math/tex">(4)</script> to take a proper scalar (e.g., 1). This leads to:
+$$
+\begin{align}
+\frac{1}{2}n_lVar[w_l] &amp;= 1, \quad \forall l \tag 7
+\end{align}
+$$</p>
+
+<p>From Eqn. <script type="math/tex">(7)</script> above, we can conclude that:
+$$
+\begin{align}
+Var[w_l] = \frac{2}{n_l} \implies \text{standard deviation (std)} = \sqrt{\frac{2}{n_l}}
+\end{align}
+$$</p>
+
+<p>The initialization according to [1] is a zero-mean Gaussian distribution whose standard deviation (std) is <script type="math/tex">\sqrt{2/n_l}</script>. The bias is initialized to zero. The initialization distribution therefore is of the form:
+$$
+\begin{align}
+W_l \sim \mathcal N \left({\Large 0}, \sqrt{\frac{2}{n_l}} \right) \,\text{and} \,\mathbf{b} = 0.
+\end{align}
+$$</p>
+
+<p>From Eqn. <script type="math/tex">(4)</script>, we can observe that for the first layer <script type="math/tex">(l = 1)</script>, the variance of weights is given by <script type="math/tex">n_lVar[w_l] = 1</script> because there is no ReLu applied on the input signal. However, the factor of a single layer does not make the overall product exponentially large or small and as such we adopt Eqn. <script type="math/tex">(7)</script> in the first layer for simplicity.</p>
+
+<h3 id="backward-propagation-case">Backward Propagation Case</h3>
+<p>For back-propagation, the gradient of the conv-layer is computed by:
+$$
+\begin{align}
+\Delta{\mathbf{x}_l} &amp;= W_l\Delta{\mathbf{y}_l}. \tag{8}
+\end{align}
+$$</p>
+
+<h3 id="notation-1">Notation</h3>
+<ol>
+  <li><script type="math/tex">\Delta{\mathbf{x}_l}</script> is the gradient <script type="math/tex">\frac{\partial \epsilon}{\partial \mathbf{x}}</script></li>
+  <li><script type="math/tex">\Delta{\mathbf{y}_l}</script> is the gradient <script type="math/tex">\frac{\partial \epsilon}{\partial \mathbf{y}}</script></li>
+  <li><script type="math/tex">\Delta{\mathbf{y}_l}</script> is represented by <script type="math/tex">k</script> by <script type="math/tex">k</script> pixels in <script type="math/tex">d</script> channels and is thus reshaped into <script type="math/tex">k^2d</script> by <script type="math/tex">1</script> vector i.e <script type="math/tex">\Delta{\mathbf{y}_l} = k^2d \times 1</script>.</li>
+  <li><script type="math/tex">\hat{n}</script> is given by <script type="math/tex">k^2d</script> also note that <script type="math/tex">\hat{n} \neq n</script>.</li>
+  <li><script type="math/tex">\hat{W}</script> is a <script type="math/tex">c \text{-by-} n</script> matrix where filters are arranged in the back-propagation way. Also <script type="math/tex">\hat{W}</script> and <script type="math/tex">W</script> can be reshaped from each other.</li>
+  <li><script type="math/tex">\Delta{\mathbf{x}}</script> is a <script type="math/tex">c \text{-by-} 1</script> vector representing the gradient at a pixel of this layer.</li>
+</ol>
+
+<p>Assumptions made here include:</p>
+
+<ul>
+  <li>Assume that <script type="math/tex">w_l</script> and <script type="math/tex">\Delta{y_l}</script> are independent of each other then <script type="math/tex">\Delta{x_l}</script> has zero mean for all <script type="math/tex">l</script>, when <script type="math/tex">w_l</script> is initialized by a symmetric distribution around zero.</li>
+  <li>Assume that <script type="math/tex">f'(y_l)</script> and <script type="math/tex">\Delta{x_{l+1}}</script> are independent of each other</li>
+</ul>
+
+<p>In back-propagation we have <script type="math/tex">\Delta{\mathbf{y}_l} = f'(y_l)\Delta{x_{l+1}}</script> where <script type="math/tex">f'</script> is the derivative of <script type="math/tex">f</script>. For the ReLu case <script type="math/tex">f'(y_l)</script> is either zero or one with their probabilities being equal i.e <script type="math/tex">\Pr{(0)} = \frac{1}{2}</script> and <script type="math/tex">\Pr{(1)} = \frac{1}{2}</script>.</p>
+
+<p>Lets build on from some definition here; for a discrete case, the expected value of a discrete random variable, X, is found by multiplying each X-value by its probability and then summing over all values of the random variable.  That is, if X is discrete,
+$$
+\begin{align}
+E[X] &amp;= \sum_{\text{all}\,x} xp(x)
+\end{align}
+$$</p>
+
+<p>The expectation of <script type="math/tex">f'(y_l)</script> then:
+$$
+\begin{align}
+E[f’(y_l)] &amp;= (0)\frac{1}{2} + (1)\frac{1}{2} = \frac{1}{2} \tag{9}
+\end{align}
+$$</p>
+
+<p>With the independence of <script type="math/tex">f'(y_l)</script> and <script type="math/tex">\Delta{x_{l+1}}</script>, we can show that:
+The expectation of <script type="math/tex">f'(y_l)</script> then:
+$$
+\begin{align}
+E[\Delta{y_{l}}] &amp;= E[f’(y_l)\Delta{x_{l+1}}] = E[f’(y_l)]E[\Delta{x_{l+1}}] \tag{10}
+\end{align}
+$$</p>
+
+<p>Substituting results in Eqn. <script type="math/tex">(9)</script> into Eqn. <script type="math/tex">(10)</script> we obtain:
+$$
+\begin{align}
+E[\Delta{y_{l}}] &amp;= \frac{1}{2}E[\Delta{x_{l+1}}] = 0 \tag{11}
+\end{align}
+$$</p>
+
+<p>In Eqn. <script type="math/tex">(10)</script> <script type="math/tex">\Delta{x_l}</script> has zero mean for all <script type="math/tex">l</script> which gives us the result zero. With this we can show that <script type="math/tex">E[(\Delta{y_{l}})^2] = Var[\Delta{y_{l}}]</script> using the formula of variance as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Var[\Delta{y_{l}}] &= E[(\Delta{y_{l}})^2] - [E[\Delta{y_{l}}]]^2 \\
+&= E[(\Delta{y_{l}})^2] - 0 \\
+&= E[(\Delta{y_{l}})^2]
+\end{align} %]]></script>
+
+<p>Again with the assumption that <script type="math/tex">\Delta{x_l}</script> has zero mean for all <script type="math/tex">l</script>, we show can that the variance of product of two independent variables <script type="math/tex">f'(y_l)</script> and <script type="math/tex">\Delta{x_{l+1}}</script> to be</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Var[\Delta{y_{l}}] &= Var[f'(y_l)\Delta{x_{l+1}}] \\
+&= E[(f'(y_l))^2]E[(\Delta{x_{l+1}})^2] - [E[f'(y_l)]]^2[E[\Delta{x_{l+1}}]]^2 \\
+&= E[(f'(y_l))^2]E[(\Delta{x_{l+1}})^2] - 0 \\
+&= E[(f'(y_l))^2]E[(\Delta{x_{l+1}})^2]  \tag{12}
+\end{align} %]]></script>
+
+<p>From the values of <script type="math/tex">f'(y_l) \in \lbrace 0,1 \rbrace</script> we can observe that <script type="math/tex">1^2 = 1</script> and <script type="math/tex">0^2 = 0</script> meaning <script type="math/tex">f'(y_l) = [f'(y_l)]^2</script>.</p>
+
+<p>This means that <script type="math/tex">E[f'(y_l)] = E[(f'(y_l))^2] = \frac{1}{2}</script>. Using this result in Eqn. <script type="math/tex">(12)</script> we obtain:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Var[\Delta{y_{l}}] &=  E[(f'(y_l))^2]E[(\Delta{x_{l+1}})^2] \\
+&= \frac{1}{2}E[(\Delta{x_{l+1}})^2] \tag{13}
+\end{align} %]]></script>
+
+<p>Using the formula for variance and yet again the assumption that <script type="math/tex">\Delta{x_l}</script> has zero mean for all <script type="math/tex">l</script>, we show can that <script type="math/tex">Var[\Delta{x_{l+1}}] = E[(\Delta{x_{l+1}})^2]</script>:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Var[\Delta{x_{l+1}}] &= E[(\Delta{x_{l+1}})^2] - [E[\Delta{x_{l+1}}]]^2 \\
+&= E[(\Delta{x_{l+1}})^2] - 0 \\
+&= E[(\Delta{x_{l+1}})^2] \tag{14}
+\end{align} %]]></script>
+
+<p>Substituting this result in Eqn. <script type="math/tex">(13)</script> we obtain:
+$$
+\begin{align}
+E[(\Delta{y_{l}})^2] &amp;= Var[\Delta{y_{l}}] = \frac{1}{2}E[(\Delta{x_{l+1}})^2] \tag{15}
+\end{align}
+$$</p>
+
+<p>The variance of Eqn. <script type="math/tex">(8)</script> can be shown to be:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+Var[\Delta{x_{l+1}}] &= \hat{n}Var[w_l]Var[\Delta{y_{l}}] \\
+&= \frac{1}{2} \hat{n}Var[w_l]Var[\Delta{x_{l+1}}] \tag{16}
+\end{align} %]]></script>
+
+<p>The scalar <script type="math/tex">1/2</script> in both Eqn. <script type="math/tex">(16)</script> and Eqn. <script type="math/tex">(3)</script> is the result of ReLu, though the derivations are different. With <script type="math/tex">L</script> layers put together, we have:
+$$
+\begin{align}
+Var[\Delta{x_2}] &amp;= Var[\Delta{x_{L+1}}]\left( \prod_{l=2}^L \frac{1}{2}\hat{n}_lVar[w_l] \right) \tag{17}
+\end{align}
+$$</p>
+
+<p>Considering a sufficient condition that the gradient is not exponentially large/small:
+$$
+\begin{align}
+\frac{1}{2}\hat{n}_lVar[w_l] &amp;= 1, \quad \forall{l} \tag{18}
+\end{align}
+$$</p>
+
+<p>The only difference between Eqn. <script type="math/tex">(18)</script> and Eqn. <script type="math/tex">(7)</script> is that <script type="math/tex">\hat{n} = k^2_ld_l</script> while <script type="math/tex">n = k^2_lc_l = k^2_ld_{l-1}</script>. Eqn. <script type="math/tex">(18)</script> results in a zero-mean Gaussian distribution whose standard deviation (std) is <script type="math/tex">\sqrt{2/\hat{n}_l}</script>. The initialization distribution therefore is of the form:
+$$
+\begin{align}
+W_l \sim \mathcal N \left({\Large 0}, \sqrt{\frac{2}{\hat{n}_l}} \right)
+\end{align}
+$$</p>
+
+<p>For the layer <script type="math/tex">(l = 1)</script>, we need not compute <script type="math/tex">\Delta{x}</script> because it represents the image domain. We adopt Eqn. <script type="math/tex">(18)</script> for the first layer for the same reason as the forward propagation case - the factor of a single layer does not make the overall product exponentially large or small.</p>
+
+<p>It is noted that use of either Eqn. <script type="math/tex">(18)</script> or Eqn. <script type="math/tex">(4)</script> alone is sufficient. For example, if we use Eqn.<script type="math/tex">(18)</script>, then in Eqn. <script type="math/tex">(17)</script> the product <script type="math/tex">\prod_{l=2}^L \frac{1}{2}\hat{n}_lVar[w_l] = 1</script>, and in Eqn. <script type="math/tex">(4)</script> the product <script type="math/tex">\prod_{l=2}^L \frac{1}{2}n_lVar[w_l] = \prod_{l=2}^L n_l/\hat{n} = c_2/d_L</script>, which is not a diminishing number in common network designs. This means that if the initialization properly scales the backward signal, then this is also the case for the forward signal; and vice versa.</p>
+
+<p>For initialization in the PReLu case, it is easy to show that Eqn. <script type="math/tex">(4)</script> becomes:
+$$
+\begin{align}
+\frac{1}{2}(1+a^2)n_lVar[w_l] &amp;= 1, \tag {19}
+\end{align}
+$$</p>
+
+<p>Where <script type="math/tex">a</script> is the initialized value of the coefficients. If <script type="math/tex">a = 0</script>, it becomes the ReLu case; if <script type="math/tex">a = 1</script>, it becomes the linear case; same as [2]. Similarly, Eqn. <script type="math/tex">(14)</script> becomes:
+$$
+\begin{align}
+\frac{1}{2}(1+a^2)\hat{n}_lVar[w_l] &amp;= 1, \tag {20}
+\end{align}
+$$</p>
+
+<h3 id="applications">Applications</h3>
+<p>The initialization routines derived here, more famously known as <strong>“Kaiming Initialization”</strong> have been successfully applied in various deep learning libraries. Below we shall look at
+<a href="https://keras.io/" target="_blank">Keras</a> a minimalist, highly modular neural networks library, written in Python and capable of running on top of either TensorFlow or Theano.</p>
+
+<p>The initialization routine here is named “he_” following the name of one of the authors Kaiming He [1]. In the code snippet below, <strong>he_normal</strong> is the implementation of initialization based on Gaussian distribution while  <strong>he_uniform</strong> is the equivalent implementation of initialization based on Uniform distribution</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">get_fans</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
+    <span class="n">fan_in</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="n">fan_out</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">return</span> <span class="n">fan_in</span><span class="p">,</span> <span class="n">fan_out</span>
+
+<span class="k">def</span> <span class="nf">he_normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">fan_in</span><span class="p">,</span> <span class="n">fan_out</span> <span class="o">=</span> <span class="n">get_fans</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.</span> <span class="o">/</span> <span class="n">fan_in</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">normal</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">he_uniform</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="n">fan_in</span><span class="p">,</span> <span class="n">fan_out</span> <span class="o">=</span> <span class="n">get_fans</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">6.</span> <span class="o">/</span> <span class="n">fan_in</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">uniform</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></code></pre></figure>
+
+<h3 id="references">References</h3>
+<ol>
+  <li>He, Kaiming, et al. “Delving deep into rectifiers: Surpassing human-level performance on imagenet classification.” Proceedings of the IEEE International Conference on Computer Vision. 2015. <a href="https://arxiv.org/pdf/1502.01852v1.pdf" target="_blank">[pdf]</a></li>
+  <li>Glorot Xavier, and Yoshua Bengio. “Understanding the difficulty of training deep feedforward neural networks.” Aistats. Vol. 9. 2010. <a href="http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf" target="_blank">[pdf]</a></li>
+  <li>A. L. Maas, A. Y. Hannun, and A. Y. Ng. “Rectifier nonlinearities improve neural network acoustic models.” In ICML, 2013. <a href="https://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf" target="_blank">[pdf]</a></li>
+  <li>Xu, Bing, et al. “Empirical Evaluation of Rectified Activations in Convolution Network.” <a href="http://arxiv.org/pdf/1505.00853v2.pdf" target="_blank">[pdf]</a></li>
+  <li>Glorot, Xavier, Antoine Bordes, and Yoshua Bengio. “Deep Sparse Rectifier Neural Networks.” Aistats. Vol. 15. No. 106. 2011. <a href="http://jmlr.org/proceedings/papers/v15/glorot11a/glorot11a.pdf" target="_blank">[pdf]</a></li>
+</ol>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+  
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  </ul>
+</div>
+
+
+  
+<div id="disqus_thread"></div>
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://jefkine.com/deep/2016/08/08/initialization-of-deep-networks-case-of-rectifiers/';
+    this.page.identifier = 'Initialization Of Deep Networks Case of Rectifiers';
+};
+
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = '//jefkine.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+
+  </body>
+</html>
