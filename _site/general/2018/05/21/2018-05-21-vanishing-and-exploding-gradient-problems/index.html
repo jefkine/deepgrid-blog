@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Vanishing And Exploding Gradient Problems | DeepGrid</title>
+<meta name="generator" content="Jekyll v3.8.1" />
+<meta property="og:title" content="Vanishing And Exploding Gradient Problems" />
+<meta name="author" content="Jefkine" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A look at the problem of vanishing or exploding gradients: two of the common problems associated with training of deep neural networks using gradient-based learning methods and backpropagation" />
+<meta property="og:description" content="A look at the problem of vanishing or exploding gradients: two of the common problems associated with training of deep neural networks using gradient-based learning methods and backpropagation" />
+<link rel="canonical" href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/" />
+<meta property="og:url" content="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/" />
+<meta property="og:site_name" content="DeepGrid" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-05-21T20:22:02+03:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/"},"@type":"BlogPosting","url":"http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/","author":{"@type":"Person","name":"Jefkine"},"headline":"Vanishing And Exploding Gradient Problems","dateModified":"2018-05-21T20:22:02+03:00","datePublished":"2018-05-21T20:22:02+03:00","description":"A look at the problem of vanishing or exploding gradients: two of the common problems associated with training of deep neural networks using gradient-based learning methods and backpropagation","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <title>
+    
+      Vanishing And Exploding Gradient Problems &middot; DeepGrid
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+
+  <!-- MathJax -->
+  <script src="https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-82905904-1', 'auto');
+  ga('require', 'linkid');
+  ga('send', 'pageview');
+
+</script>
+
+
+</head>
+
+
+  <body>
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-family: 'PT Sans'; font-size: 42px;">
+        <a href="/">
+          DeepGrid
+        </a>
+      </h1>
+      <p class="lead">Organic Deep Learning.</p>
+    </div>
+
+    <div>
+      
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 16px; color: #555">Latest Article:</p>
+        <a href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/"><strong>Vanishing And Exploding Gradient Problems</strong></a>
+        <p style="margin-top: 0px; margin-bottom: 10px;"><span style="font-size: 12px; color: #555">21 May 2018</span></p>
+      
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item" href="/">Home</a>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/about/">About</a>
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/archive/">Archive</a>
+          
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    </nav>
+
+    <p style="margin: 0px; color: #fff"><a href="https://github.com/jefkine" target="_blank">GitHub</p>
+    <p style="margin-top: 0px; margin-bottom: 10px;"><a href="https://twitter.com/jefkine" target="_blank">Twitter @jefkine</a></p>
+
+    <p>&copy; 2018. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Vanishing And Exploding Gradient Problems</h1>
+  <span class="post-date">Jefkine, 21 May 2018</span>
+  <h3 id="introduction">Introduction</h3>
+<p>Two of the common problems associated with training of deep neural networks using gradient-based learning methods and backpropagation include the <strong>vanishing</strong> gradients and that of the <strong>exploding</strong> gradients.</p>
+
+<p>In this article we explore how these problems affect the training of recurrent neural networks and also explore some of the methods that have been proposed as solutions.</p>
+
+<h3 id="recurrent-neural-network">Recurrent Neural Network</h3>
+<p>A recurrent neural network has the structure of multiple feedforward neural networks with connections among their hidden units. Each layer on the RNN represents a distinct time step and the weights are shared across time.</p>
+
+<p>The combined feedfoward neural networks work over time to compute parts of the output one at a time sequentially.</p>
+
+<p>Connections among the hidden units allow the model to iteratively build a relevant summary of past observations hence capturing dependencies between events that are several steps apart in the data.</p>
+
+<p>An illustration of the RNN model is given below:</p>
+
+<p><img src="/assets/images/rnn_model.png" alt="RNN Model" class="img-responsive" /></p>
+
+<p>For any given time point <script type="math/tex">t</script>, the hidden state <script type="math/tex">\textbf{h}_{t}</script> is computed using a function <script type="math/tex">f_{\textbf{W}}</script> with parameters <script type="math/tex">\textbf{W}</script> that takes in the current data point <script type="math/tex">\textbf{x}_{t}</script> and hidden state in the previous time point <script type="math/tex">\textbf{h}_{t-1}</script>. i.e <script type="math/tex">f_{\textbf{W}}(\textbf{h}_{t-1}, \textbf{x}_{t})</script>.</p>
+
+<p><script type="math/tex">\textbf{W}</script> represents a set of tunable parameters or weights on which the function <script type="math/tex">f_{\textbf{W}}</script> depends. Note that the same weight matrix <script type="math/tex">\textbf{W}</script> and function <script type="math/tex">f</script> are used at every timestep.</p>
+
+<p>Parameters <script type="math/tex">\textbf{W}</script> control what will be remembered and what will be discarded about the past sequence allowing data points from the past say <script type="math/tex">\textbf{x}_{t - n}</script> for <script type="math/tex">n \geq 1</script> to influence the current and even later outputs by way of the recurrent connections</p>
+
+<p>In its functional form, the recurrent neural network can be represented as:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\textbf{h}_{t} &= f_{\textbf{W}}\left(\textbf{h}_{t-1}, \textbf{x}_{t} \right) \tag{1} \\
+\textbf{h}_{t} &= f\left(\textbf{W}^{hx}x_{t} + \textbf{W}^{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2a} \\
+\textbf{h}_{t} &= \textbf{tanh}\left(\textbf{W}^{hx}x_{t} +  \textbf{W}^{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2b} \\
+\hat{\textbf{y}}_{t} &= \textbf{softmax}\left(\textbf{W}^{yh}h_{t} + \textbf{b}^{y}\right) \tag{3}
+\end{align} %]]></script>
+
+<p>From the above equations we can see that the RNN model is parameterized by three weight matrices</p>
+
+<ul>
+  <li><script type="math/tex">\textbf{W}^{hx} \in \mathbb{R}^{h \times x}</script> is the weight matrix between input and the hidden layer</li>
+  <li><script type="math/tex">\textbf{W}^{hh} \in \mathbb{R}^{h \times h}</script> is the weight matrix between two hidden layers</li>
+  <li><script type="math/tex">\textbf{W}^{yh} \in \mathbb{R}^{y \times h}</script> is the weight matrix between the hidden layer and the output</li>
+</ul>
+
+<p>We also have bias vectors incorporated into the model as well</p>
+
+<ul>
+  <li><script type="math/tex">\textbf{b}^{h} \in \mathbb{R}^{h}</script> is the bias vector added to the hidden layer</li>
+  <li><script type="math/tex">\textbf{b}^{y} \in \mathbb{R}^{y}</script> is the bias vector added to the output layer</li>
+</ul>
+
+<p><script type="math/tex">\textbf{tanh}(\cdot)</script> is the non-linearity added to the hidden states while <script type="math/tex">\textbf{softmax}(\cdot)</script> is the activation function used in the output layer.</p>
+
+<p>RNNs are trained in a sequential supervised manner. For time step <script type="math/tex">t</script>, the error is given by the difference between the predicted and targeted: <script type="math/tex">(\hat{\textbf{y}_t} - \textbf{y}_{t})</script>. The overall loss <script type="math/tex">\mathcal{L}(\hat{\textbf{y}}, \textbf{y})</script> is usually a sum of time step specific losses found in the range of intrest <script type="math/tex">[t, T]</script> given by:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\mathcal{\large{L}} (\hat{\textbf{y}}, \textbf{y}) = \sum_{t = 1}^{T} \mathcal{ \large{L} }(\hat{\textbf{y}_t}, \textbf{y}_{t})  \tag{4}
+\end{align}</script>
+
+<h3 id="vanishing-and-exploding-gradients">Vanishing and Exploding Gradients</h3>
+<p>Training of the unfolded recurrent neural network is done across multiple time steps using backpropagation where the overall error gradient is equal to the sum of the individual error gradients at each time step.</p>
+
+<p>This algorithm is known as <strong>backpropagation through time (BPTT)</strong>. If we take a total of <script type="math/tex">T</script> time steps, the error is given by the following equation:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\frac{\partial \textbf{E}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}_{t}}{\partial \textbf{W}} \tag{5}
+\end{align}</script>
+
+<p>Applying chain rule to compute the overall error gradient we have the following</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\frac{\partial \textbf{E}}{\partial \textbf{W}} = \sum_{t=1}^{T} \frac{\partial \textbf{E}}{\partial \textbf{y}_{t}} \frac{\partial \textbf{y}_{t}}{\partial \textbf{h}_{t}} \overbrace{\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}}^{ \bigstar } \frac{\partial \textbf{h}_{k}}{\partial \textbf{W}} \tag{6}
+\end{align}</script>
+
+<p>The term marked <script type="math/tex">\bigstar</script> ie <script type="math/tex">\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}</script> is the derivative of the hidden state at time <script type="math/tex">t</script> with respect to the hidden state at time <script type="math/tex">k</script>. This term  involves products of Jacobians <script type="math/tex">\frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}}</script> over subsequences linking an event at time <script type="math/tex">t</script> and one at time <script type="math/tex">k</script> given by:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}} &= \frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}} \frac{\partial \textbf{h}_{t-1}}{\partial \textbf{h}_{t-2}} \cdots \frac{\partial \textbf{h}_{k+1}}{\partial \textbf{h}_{k}}  \tag{7} \\
+&= \prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}}  \tag{8}
+\end{align} %]]></script>
+
+<p>The product of Jacobians in Eq. <script type="math/tex">7</script> features the derivative of the term <script type="math/tex">\textbf{h}_{t}</script> w.r.t <script type="math/tex">\textbf{h}_{t-1}</script>, i.e <script type="math/tex">\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}</script> which when evaluated on Eq. <script type="math/tex">2a</script> yields <script type="math/tex">\textbf{W}^\top \left[ f'\left(\textbf{h}_{t-1}\right) \right]</script>, hence:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} = \prod_{i=k+1}^{t} \textbf{W}^\top \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right]  \tag{9}
+\end{align}</script>
+
+<p>If we perform eigendecomposition on the Jacobian matrix <script type="math/tex">\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}</script> given by <script type="math/tex">\textbf{W}^\top \text{diag} \left[ f'\left(\textbf{h}_{t-1}\right) \right]</script>, we get the eigenvalues <script type="math/tex">\lambda_{1}, \lambda_{2}, \cdots, \lambda_{n}</script> where <script type="math/tex">\lvert\lambda_{1}\rvert \gt \lvert\lambda_{2}\rvert \gt\cdots \gt \lvert\lambda_{n}\rvert</script> and the corresponding eigenvectors <script type="math/tex">\textbf{v}_{1},\textbf{v}_{1},\cdots,\textbf{v}_{n}</script>.</p>
+
+<p>Any change on the hidden state <script type="math/tex">\Delta\textbf{h}_{t}</script> in the direction of a vector <script type="math/tex">\textbf{v}_{i}</script> has the effect of multiplying the change with the eigenvalue associated with this eigenvector i.e <script type="math/tex">\lambda_{i}\Delta\textbf{h}_{t}</script>.</p>
+
+<p>The product of these Jacobians as seen in Eq. <script type="math/tex">9</script> imply that subsequent time steps, will result in scaling the change with a factor equivalent to <script type="math/tex">\lambda_{i}^{t}</script>, where <script type="math/tex">\text{t}</script> represents the current time step.</p>
+
+<p>Looking at the sequence <script type="math/tex">\lambda_{i}^{1}\Delta\textbf{h}_{1}, \lambda_{i}^{2}\Delta\textbf{h}_{2}, \cdots \lambda_{i}^{n}\Delta\textbf{h}_{n}</script>, it is easy to see that the factor <script type="math/tex">\lambda_{i}^{t}</script> which represents the <script type="math/tex">\text{i}^{th}</script> eigenvalue raised to the power of the current time step <script type="math/tex">t</script> will end up dominating the <script type="math/tex">\Delta\textbf{h}_{t}</script>’s because this term grows exponentially fast as <script type="math/tex">\text{t} \rightarrow \infty</script>.</p>
+
+<p>This means that if the largest eigenvalue <script type="math/tex">\lambda_{1} \lt 1</script> then the gradient will varnish while if the value of <script type="math/tex">\lambda_{1} \gt 1</script>, the gradient explodes.</p>
+
+<p><strong>Alternate intuition:</strong> Lets take a deeper look at the norms associated with these Jacobians:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}^\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \tag{10}
+\end{align}</script>
+
+<p>In Eq. <script type="math/tex">10</script> above, we set <script type="math/tex">\gamma_{\textbf{W}}</script>, the largest eigenvalue associated with <script type="math/tex">\left\lVert \textbf{W}^\top \right\rVert</script>  as its upper bound, while <script type="math/tex">\gamma_{\textbf{h}}</script> largest eigenvalue associated with <script type="math/tex">\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert</script> as its corresponding the upper bound.</p>
+
+<p>Depending on the activation function <script type="math/tex">f</script> chosen for the model, the derivative <script type="math/tex">f'</script> in <script type="math/tex">\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert</script> will be upper bounded by different values. For <script type="math/tex">\textbf{tanh}</script> we have <script type="math/tex">\gamma_{\textbf{h}} = 1</script> while for <script type="math/tex">\textbf{sigmoid}</script> we have <script type="math/tex">\gamma_{\textbf{h}} = 1/4</script>. This is illustrated in the diagram below:</p>
+
+<p><img src="/assets/images/activation_derivatives.png" alt="Activation Plots" class="img-responsive" /></p>
+
+<p>The chosen upper bounds <script type="math/tex">\gamma_{\textbf{W}}</script> and <script type="math/tex">\gamma_{\textbf{h}}</script> end up being a constant term resulting from their product as shown in Eq. <script type="math/tex">11</script> below:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}^\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \leq \gamma_{\textbf{W}} \gamma_{\textbf{h}} \tag{11}
+\end{align}</script>
+
+<p>The gradient <script type="math/tex">\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}}</script>, as seen in Eq. <script type="math/tex">8</script>, is a product of Jacobian matrices that are multiplied many times, <script type="math/tex">t-k</script> times to be precise in our case.</p>
+
+<p>This relates well with Eq. <script type="math/tex">11</script> above where the norm <script type="math/tex">\left\lVert \frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}} \right\rVert</script> is essentially given by a constant term <script type="math/tex">\left( \gamma_{\textbf{W}} \gamma_{\textbf{h}} \right)</script> to the power <script type="math/tex">t -k</script> as shown below:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\left\lVert \frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{k}} \right\rVert = \left\lVert \prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq  \left( \gamma_{\textbf{W}} \gamma_{\textbf{h}} \right)^{t-k} \tag{12}
+\end{align}</script>
+
+<p>As the sequence gets longer (i.e the distance between <script type="math/tex">t</script> and <script type="math/tex">k</script> increases), then the value of <script type="math/tex">\gamma</script> will determine if the gradient either gets very large (<strong>explodes</strong>) on gets very small (<strong>varnishes</strong>).</p>
+
+<p>Since <script type="math/tex">\gamma</script> is associated with the leading eigenvalues of <script type="math/tex">\frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}}</script>, the recursive product of <script type="math/tex">t -k</script> Jacobian matrices as seen in Eq. <script type="math/tex">12</script> makes it possible to influence the overall gradient in such a way that for <script type="math/tex">\gamma \lt 1</script> the gradient tends to <strong>varnish</strong>  while for <script type="math/tex">\gamma \gt 1</script> the gradient tends to <strong>explode</strong>. This corresponds nicely with our earlier intuition involving <script type="math/tex">\Delta\textbf{h}_{t}</script>.</p>
+
+<p>These problems ultimately prevent the input at time step <script type="math/tex">k</script> (past) to have any influence on the output at stage <script type="math/tex">t</script> (present).</p>
+
+<h3 id="proposed-solutions-for-exploding-gradients">Proposed Solutions For Exploding Gradients</h3>
+
+<p><strong>Truncated Backpropagation Through Time (TBPTT):</strong> This method sets up some maximum number of time steps <script type="math/tex">n</script> is along which error can be propagated. This means in Eq. <script type="math/tex">12</script>, we have <script type="math/tex">t - n</script> where <script type="math/tex">n \ll k</script> hence limiting the number of time steps factored into the overall error gradient during backpropagation.</p>
+
+<p>This helps prevent the gradient from growing exponentially beyond <script type="math/tex">n</script> steps. A major drawback with this method is that it sacrifices the ability to learn long-range dependencies beyond the limited <script type="math/tex">t -n</script> range.</p>
+
+<p><strong>L1 and L2 Penalty On The Recurrent Weights <script type="math/tex">\textbf{W}^{hh}</script>:</strong> This method [1] uses regularization to ensures that the spectral radius of the <script type="math/tex">\textbf{W}^{hh}</script> does not exceed <script type="math/tex">1</script>, which in itself is a sufficient condition for gradients not to explode.</p>
+
+<p>The drawback here however is that the model is limited to a simple regime, all input has to die out exponentially fast in time. This method cannot be used to train a generator model and also sacrifices the ability to learn long-range dependencies.</p>
+
+<p><strong>Teacher Forcing:</strong> This method seeks to initialize the model in the right regime and the right region of space. It can be used in training of a generator model or models that work with unbounded memory lengths [2]. The drawback is that it requires the target to be defined at each time step.</p>
+
+<p><strong>Clipping Gradients:</strong>  This method [1] seeks to rescale down gradients whenever they go beyond a given threshold. The gradients are prevented from exploding by rescaling them so that their norm is maintained at a value of less than or equal to the set threshold.</p>
+
+<p>Let <script type="math/tex">\textbf{g}</script> represent the gradient <script type="math/tex">\frac{\partial \textbf{E}}{\partial \textbf{W}}</script>. If <script type="math/tex">\lVert \textbf{g} \rVert \ge \text{threshold}</script>, then we set the value of <script type="math/tex">\textbf{g}</script> to be:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\textbf{g} \leftarrow \frac{\text{threshold}}{\lVert \textbf{g} \rVert} \textbf{g} \tag{13}
+\end{align}</script>
+
+<p>The drawback here is that this method introduces an additional hyper-parameter; the threshold.</p>
+
+<p><strong>Echo State Networks:</strong> This method [1,8] works by not learning the weights between input to hidden <script type="math/tex">\textbf{W}^{hx}</script> and the weights between hidden to hidden <script type="math/tex">\textbf{W}^{hh}</script>. These weights are instead sampled from carefully chosen distributions. Training data is used to learn the  weights between hidden to output <script type="math/tex">\textbf{W}^{yh}</script>.</p>
+
+<p>The effect of this is that when weights in the recurrent connections <script type="math/tex">\textbf{W}^{hh}</script> are sampled so that their spectral radius is slightly less than 1, information fed into the model is held for a limited (small) number of time steps during the training process.</p>
+
+<p>The drawback here is that these models loose the ability to learn long-range dependencies. This set up also has a negative effect on the varnishing gradient problem.</p>
+
+<h3 id="proposed-solutions-for-vanishing-gradients">Proposed Solutions For Vanishing Gradients</h3>
+
+<p><strong>Hessian Free Optimizer With Structural Dumping:</strong> This method [1,3] uses the Hessian which has the ability to rescale components in high dimensions independently since presumably, there is a high probability for long term components to be orthogonal to short term ones but in practice. However, one cannot guarantee that this property holds.</p>
+
+<p>Structural dumping improves this by allowing the model to be more selective in the way it penalizes directions of change in parameter space, focusing on those that are more likely to lead to large changes in the hidden state sequence. This forces the change in state to be small, when parameter changes by some small value <script type="math/tex">\Delta \textbf{W}</script>.</p>
+
+<p><strong>Leaky Integration Units:</strong> This method [1] forces a subset of the units to change slowly using the following <script type="math/tex">\textbf{leaky integration}</script> state to state map:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\textbf{h}_{t,i} =\alpha_{i} \textbf{h}_{t-1,i} + \left( 1- \alpha_{i}\right) f_{\textbf{W}}\left(\textbf{h}_{t-1}, \textbf{x}_{t} \right) \tag{14}
+\end{align}</script>
+
+<p>When <script type="math/tex">\alpha = 0</script>, the unit corresponds to a standard RNN. In [5] different values of <script type="math/tex">\alpha</script> were randomly sampled from <script type="math/tex">(0.02, 0.2)</script>, allowing some units to react quickly while others are forced to change slowly, but also propagate signals and gradients further in time hence increasing the time it takes for gradients to vanishing.</p>
+
+<p>The drawback here is that since values chosen for <script type="math/tex">\alpha \lt 1</script> then the gradients can still vanish while also still explode via <script type="math/tex">f_{\textbf{W}}\left(\cdot\right)</script>.</p>
+
+<p><strong>Vanishing Gradient Regularization:</strong> This method [1] implements a regularizer that ensures during backpropagation, gradients neither increase or decrease much in magnitude. It does this by forcing the Jacobian matrices <script type="math/tex">\frac{\partial \textbf{h}_{k+1}}{\partial \textbf{h}_{k}}</script> to preserve norm only in the relevant direction of the error <script type="math/tex">\frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}}</script>.</p>
+
+<p>The regularization term is as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial \Omega}{\textbf{W}^{hh}} &= \sum_{k} \frac{\partial \Omega_{k}}{\textbf{W}^{hh}} \tag{15} \\
+&= \sum_{k} \frac{\partial\left( \frac{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} {\textbf{W}^{hh}}^\top \textbf{diag} \left( f'(h_{k})\right) \right\rVert}{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} \right\rVert} -1 \right)^{2}}{\partial \textbf{W}^{hh}}  \tag{16}
+\end{align} %]]></script>
+
+<p><strong>Long Short-Term Memory:</strong> This method makes use of sophisticated units the LSTMs [6] that implement gating mechanisms to help control the flow of information to and from the units. By shutting the gates, these units have the ability to create a linear self-loop through which allow information to flow for an indefinite amount of time thus overcoming the vanishing gradients problem.</p>
+
+<p><strong>Gated Recurrent Unit:</strong> This method makes use of units known as GRUs [7] which have only two gating units that that modulate the flow of information inside the unit thus making them less restrictive as compared to the LSTMs, while still having the ability to allow information to flow for an indefinite amount of time hence overcoming the vanishing gradients problem.</p>
+
+<h3 id="conclusions">Conclusions</h3>
+
+<p>In this article we went through the intuition behind the vanishing and exploding gradient problems. The values of the largest eigenvalue <script type="math/tex">\lambda_{1}</script> have a direct influence in the way the gradient behaves eventually. <script type="math/tex">\lambda_{1} \lt 1</script> causes the gradients to varnish while <script type="math/tex">\lambda_{1} \gt 1</script> caused the gradients to explode.</p>
+
+<p>This leads us to the fact <script type="math/tex">\lambda_{1} = 1</script> would avoid both the vanishing and exploding gradient problems and although it is not as straightforward as it seems. This fact however has been used as the intuition behind creating most of the proposed solutions.</p>
+
+<p>The proposed solution are discussed in brief, with some key references that the readers would find useful in obtain a greater understanding of how they work. Feel free to leave questions or feedback in the comments section.</p>
+
+<h3 id="references">References</h3>
+<ol>
+  <li>Pascanu, Razvan; Mikolov, Tomas; Bengio, Yoshua (2012) On the difficulty of training Recurrent Neural Networks <a href="https://arxiv.org/abs/1211.5063" target="_blank">[pdf]</a></li>
+  <li>Doya, K. (1993). Bifurcations of recurrent neural networks in gradient descent learning. IEEE Transactions on Neural Networks, 1, 75–80. <a href="https://pdfs.semanticscholar.org/b579/27b713a6f9b73c7941f99144165396483478.pdf" target="_blank">[pdf]</a></li>
+  <li>Martens, J. and Sutskever, I. (2011). Learning recurrent neural networks with Hessian-free optimization. In Proc. ICML’2011 . ACM. <a href="http://www.icml-2011.org/papers/532_icmlpaper.pdf" target="_blank">[pdf]</a></li>
+  <li>Jaeger, H., Lukosevicius, M., Popovici, D., and Siewert, U. (2007). Optimization and applications of echo state networks with leaky- integrator neurons. Neural Networks, 20(3), 335–352. <a href="https://pdfs.semanticscholar.org/a10e/c7cc6c42c7780ef631c038b16c49ed865038.pdf" target="_blank">[pdf]</a></li>
+  <li>Yoshua Bengio, Nicolas Boulanger-Lewandowski, Razvan Pascanu, Advances in Optimizing Recurrent Networks arXiv report 1212.0901, 2012. <a href="https://arxiv.org/pdf/1212.0901.pdf" target="_blank">[pdf]</a></li>
+  <li>Hochreiter, S. and Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9(8):1735–1780. <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.4320&amp;rep=rep1&amp;type=pdf" target="_blank">[pdf]</a></li>
+  <li>Kyunghyun Cho, Bart Van Merriënboer, Caglar Gulcehre, Dzmitry Bahdanau, Fethi Bougares, Holger Schwenk, and Yoshua Bengio. Learning phrase representations using rnn encoder–decoder for statistical machine translation. In Proc. EMNLP, pages 1724–1734. ACL, 2014 <a href="https://arxiv.org/pdf/1406.1078.pdf" target="_blank">[pdf]</a></li>
+  <li>Lukoˇseviˇcius, M. and Jaeger, H. (2009). Reservoir computing approaches to recurrent neural network training. Computer Science Review, 3(3), 127–149. <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.843&amp;rep=rep1&amp;type=pdf" target="_blank">[pdf]</a></li>
+</ol>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+  
+
+  
+    
+      <li>
+        <h3>
+          <a href="http://www.jefkine.com/general/2016/08/24/formulating-the-relu/">
+            Formulating The ReLu
+            <small>24 Aug 2016</small>
+          </a>
+        </h3>
+      </li>
+    
+  
+
+  
+    
+      <li>
+        <h3>
+          <a href="http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/">
+            Backpropagation In Convolutional Neural Networks
+            <small>05 Sep 2016</small>
+          </a>
+        </h3>
+      </li>
+    
+  
+
+  
+
+  
+    
+  
+
+
+  </ul>
+</div>
+
+
+  
+<div id="disqus_thread"></div>
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/';
+    this.page.identifier = 'Vanishing And Exploding Gradient Problems';
+};
+
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = '//jefkine.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+
+  </body>
+</html>

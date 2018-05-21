@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Formulating The ReLu | DeepGrid</title>
+<meta name="generator" content="Jekyll v3.8.1" />
+<meta property="og:title" content="Formulating The ReLu" />
+<meta name="author" content="Jefkine" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A critical review of the rectified linear activation function (ReL) as an elementary unit of the modern deep neural network architecture" />
+<meta property="og:description" content="A critical review of the rectified linear activation function (ReL) as an elementary unit of the modern deep neural network architecture" />
+<link rel="canonical" href="http://www.jefkine.com/general/2016/08/24/formulating-the-relu/" />
+<meta property="og:url" content="http://www.jefkine.com/general/2016/08/24/formulating-the-relu/" />
+<meta property="og:site_name" content="DeepGrid" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2016-08-24T16:36:02+03:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"http://www.jefkine.com/general/2016/08/24/formulating-the-relu/"},"@type":"BlogPosting","url":"http://www.jefkine.com/general/2016/08/24/formulating-the-relu/","author":{"@type":"Person","name":"Jefkine"},"headline":"Formulating The ReLu","dateModified":"2016-08-24T16:36:02+03:00","datePublished":"2016-08-24T16:36:02+03:00","description":"A critical review of the rectified linear activation function (ReL) as an elementary unit of the modern deep neural network architecture","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <title>
+    
+      Formulating The ReLu &middot; DeepGrid
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+
+  <!-- MathJax -->
+  <script src="https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-82905904-1', 'auto');
+  ga('require', 'linkid');
+  ga('send', 'pageview');
+
+</script>
+
+
+</head>
+
+
+  <body>
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-family: 'PT Sans'; font-size: 42px;">
+        <a href="/">
+          DeepGrid
+        </a>
+      </h1>
+      <p class="lead">Organic Deep Learning.</p>
+    </div>
+
+    <div>
+      
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 16px; color: #555">Latest Article:</p>
+        <a href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/"><strong>Vanishing And Exploding Gradient Problems</strong></a>
+        <p style="margin-top: 0px; margin-bottom: 10px;"><span style="font-size: 12px; color: #555">21 May 2018</span></p>
+      
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item" href="/">Home</a>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/about/">About</a>
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/archive/">Archive</a>
+          
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    </nav>
+
+    <p style="margin: 0px; color: #fff"><a href="https://github.com/jefkine" target="_blank">GitHub</p>
+    <p style="margin-top: 0px; margin-bottom: 10px;"><a href="https://twitter.com/jefkine" target="_blank">Twitter @jefkine</a></p>
+
+    <p>&copy; 2018. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Formulating The ReLu</h1>
+  <span class="post-date">Jefkine, 24 August 2016</span>
+  <div class="message">
+   <strong>Rectified Linear Function (ReL):</strong> In this article we take a critical review of the rectified linear activation function and its formulation as derived from the sigmoid activation function.
+</div>
+
+<p><img src="/assets/images/ReLU-Big.png" alt="ReLu" class="img-responsive" /></p>
+
+<h3 id="rel-definition">ReL Definition</h3>
+
+<p>The Rectified Linear Function (ReL) is a max function given by <script type="math/tex">f(x) = max(0,x)</script> where <script type="math/tex">x</script> is the input. A more generic form of the ReL Function as used in neural networks can be put together as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+f(x_i) =
+\begin{cases}
+x_i,  & \text{if} \, x_i \gt 0 \\
+a_ix_i, & \text{if} \, x_i \le 0
+\end{cases} \tag {1}
+\end{align} %]]></script>
+
+<p>In Eqn. <script type="math/tex">(1)</script> above, <script type="math/tex">x_i</script> is the input of the nonlinear activation <script type="math/tex">f</script> on the <script type="math/tex">i</script>th channel, and <script type="math/tex">a_i</script> is the coefficient controlling the slope of the negative part. <script type="math/tex">i</script> in <script type="math/tex">a_i</script> indicates that we allow the nonlinear activation to vary on different channels.</p>
+
+<p>The variations of rectified linear (ReL) take the following forms:</p>
+
+<ol>
+  <li><strong>ReLu</strong>: obtained when <script type="math/tex">a_i = 0</script>. The resultant activation function is of the form <script type="math/tex">f(x_i) = max(0,x_i)</script></li>
+  <li><strong>PReLu</strong>:  Parametric ReLu - obtained when <script type="math/tex">a_i</script> is a learnable parameter. The resultant activation function is of the form <script type="math/tex">f(x_i) = max(0,x_i) + a_i min(0,x_i)</script></li>
+  <li><strong>LReLu</strong>: Leaky ReLu - obtained when <script type="math/tex">a_i = 0.01</script> i.e when <script type="math/tex">a_i</script> is a small and fixed value [1]. The resultant activation function is of the form <script type="math/tex">f(x_i) = max(0,x_i) + 0.01 min(0,x_i)</script></li>
+  <li><strong>RReLu</strong>: Randomized Leaky ReLu - the randomized version of leaky ReLu, obtained when <script type="math/tex">a_{ji}</script> is a random number
+sampled from a uniform distribution <script type="math/tex">U(l,u)</script> i.e <script type="math/tex">% <![CDATA[
+a_{ji} \, U \sim (l, u); \, l < u \, \text{and} \, l, u \in [0; 1) %]]></script>. See [2].</li>
+</ol>
+
+<h3 id="from-sigmoid-to-relu">From Sigmoid To ReLu</h3>
+<p>A sigmoid function is a special case of the logistic function which is given by <script type="math/tex">f(x) = 1/\left(1+e^{-x}\right)</script> where <script type="math/tex">x</script> is the input and it’s output boundaries are <script type="math/tex">(0,1)</script>.</p>
+
+<p><img src="/assets/images/sigmoid.png" alt="sigmoid" class="img-responsive" /></p>
+
+<p>Take an in-finite number of copies of sigmoid units, all having the same incoming and outgoing weights <script type="math/tex">\mathbf{w}</script> and the same adaptive bias <script type="math/tex">b</script>. Let each copy have a different, fixed offset to the bias.</p>
+
+<p>With offsets that are of the form <script type="math/tex">0.5, 1.5, 2.5, 3.5, \dotsb</script>, we obtain a set of sigmoids units with different biases commonly referred to as stepped sigmoid units (SSU). This set can be illustrated by the diagram below:</p>
+
+<p><img src="/assets/images/offset-sigmoids.png" alt="offset sigmoids" class="img-responsive" /></p>
+
+<p>The illustration above represents a set of feature detectors with potentially higher threshold. Given all have the same incoming and outgoing weights, we would then like to know how many will turn on given some input. This translates to the same as finding the sum of the logistic of all these stepped sigmoid units (SSU).</p>
+
+<p>The sum of the probabilities of the copies is extremely close to <script type="math/tex">\log{(1 + e^x)}</script> i.e.
+$$
+\begin{align}
+\sum_{n=1}^{\infty} \text{logistic} \, (x + 0.5 - n) \approx \log{(1 + e^x)} \tag {2}
+\end{align}
+$$</p>
+
+<p>Actually if you take the limits of the sum <script type="math/tex">\sum_{n=1}^{\infty} \text{logistic} \, (x + 0.5 - n)</script> and make it an intergral, it turns out to be exactly <script type="math/tex">\log{(1 + e^x)}</script>. See <a href="http://mathworld.wolfram.com/SigmoidFunction.html" target="_blank">Wolfram</a> for more info.</p>
+
+<p>Now we know that <script type="math/tex">\log{(1 + e^x)}</script> is behaving like a collection of logistics but more powerful than just one logistic as it does not saturate at the top and has a more dynamic range.</p>
+
+<p><script type="math/tex">\log{(1 + e^x)}</script> is known as the <strong>softplus function</strong> and can be approximated by <strong>max function (or hard max)</strong> i.e <script type="math/tex">\text{max}(0, x)</script>. The max function is commonly known as <strong>Rectified Linear Function (ReL)</strong>.</p>
+
+<p>In the illustration below the blue curve represents the softplus while the red represents the ReLu.</p>
+
+<p><img src="/assets/images/softplus.png" alt="softplus" class="img-responsive" /></p>
+
+<h3 id="advantages-of-relu">Advantages of ReLu</h3>
+<p>ReLu (Rectified Linear Units) have recently become an alternative activation function to the sigmoid function in neural networks and below are some of the related advantages:</p>
+
+<ul>
+  <li>ReLu activations used as the activation function induce sparsity in the hidden units. Inputs into the activation function of values less than or equal to <script type="math/tex">0</script>, results in an output value of <script type="math/tex">0</script>. Sparse representations are considered more valuable.</li>
+  <li>ReLu activations do not face gradient vanishing problem as with sigmoid and tanh function.</li>
+  <li>ReLu activations do not require any exponential computation (such as those required in sigmoid or tanh activations). This ensures faster training than sigmoids due to less numerical computation.</li>
+  <li>ReLu activations overfit more easily than sigmoids, this sets them up nicely to be used in combination with dropout, a technique to avoid overfitting.</li>
+</ul>
+
+<h3 id="references">References</h3>
+<ol>
+  <li>A. L. Maas, A. Y. Hannun, and A. Y. Ng. “Rectifier nonlinearities improve neural network acoustic models.” In ICML, 2013. <a href="https://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf" target="_blank">[pdf]</a></li>
+  <li>Xu, Bing, et al. “Empirical Evaluation of Rectified Activations in Convolution Network.” <a href="http://arxiv.org/pdf/1505.00853v2.pdf" target="_blank">[pdf]</a></li>
+  <li>Nair, Vinod, and Geoffrey E. Hinton. “Rectified linear units improve restricted boltzmann machines.” Proceedings of the 27th International Conference on Machine Learning (ICML-10). 2010.  <a href="http://www.cs.toronto.edu/~fritz/absps/reluICML.pdf" target="_blank">[pdf]</a></li>
+</ol>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+  
+
+  
+    
+  
+
+  
+    
+      <li>
+        <h3>
+          <a href="http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/">
+            Backpropagation In Convolutional Neural Networks
+            <small>05 Sep 2016</small>
+          </a>
+        </h3>
+      </li>
+    
+  
+
+  
+
+  
+    
+      <li>
+        <h3>
+          <a href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/">
+            Vanishing And Exploding Gradient Problems
+            <small>21 May 2018</small>
+          </a>
+        </h3>
+      </li>
+    
+  
+
+
+  </ul>
+</div>
+
+
+  
+<div id="disqus_thread"></div>
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://jefkine.com/general/2016/08/24/formulating-the-relu/';
+    this.page.identifier = 'Formulating The ReLu';
+};
+
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = '//jefkine.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+
+  </body>
+</html>

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+  <head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  <!-- Enable responsiveness on mobile devices-->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <!-- Begin Jekyll SEO tag v2.4.0 -->
+<title>Backpropagation In Convolutional Neural Networks | DeepGrid</title>
+<meta name="generator" content="Jekyll v3.8.1" />
+<meta property="og:title" content="Backpropagation In Convolutional Neural Networks" />
+<meta name="author" content="Jefkine" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Backpropagation in convolutional neural networks. A closer look at the concept of weights sharing in convolutional neural networks (CNNs) and an insight on how this affects the forward and backward propagation while computing the gradients during training." />
+<meta property="og:description" content="Backpropagation in convolutional neural networks. A closer look at the concept of weights sharing in convolutional neural networks (CNNs) and an insight on how this affects the forward and backward propagation while computing the gradients during training." />
+<link rel="canonical" href="http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/" />
+<meta property="og:url" content="http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/" />
+<meta property="og:site_name" content="DeepGrid" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2016-09-05T18:36:02+03:00" />
+<script type="application/ld+json">
+{"mainEntityOfPage":{"@type":"WebPage","@id":"http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/"},"@type":"BlogPosting","url":"http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/","author":{"@type":"Person","name":"Jefkine"},"headline":"Backpropagation In Convolutional Neural Networks","dateModified":"2016-09-05T18:36:02+03:00","datePublished":"2016-09-05T18:36:02+03:00","description":"Backpropagation in convolutional neural networks. A closer look at the concept of weights sharing in convolutional neural networks (CNNs) and an insight on how this affects the forward and backward propagation while computing the gradients during training.","@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+
+  <title>
+    
+      Backpropagation In Convolutional Neural Networks &middot; DeepGrid
+    
+  </title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/poole.css">
+  <link rel="stylesheet" href="/public/css/syntax.css">
+  <link rel="stylesheet" href="/public/css/hyde.css">
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700">
+
+  <!-- Icons -->
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/public/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/public/favicon.ico">
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS" href="/atom.xml">
+
+  <!-- MathJax -->
+  <script src="https://cdn.rawgit.com/mathjax/MathJax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-82905904-1', 'auto');
+  ga('require', 'linkid');
+  ga('send', 'pageview');
+
+</script>
+
+
+</head>
+
+
+  <body>
+
+    <div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-family: 'PT Sans'; font-size: 42px;">
+        <a href="/">
+          DeepGrid
+        </a>
+      </h1>
+      <p class="lead">Organic Deep Learning.</p>
+    </div>
+
+    <div>
+      
+        <p style="margin-top: 10px; margin-bottom: 0; font-size: 16px; color: #555">Latest Article:</p>
+        <a href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/"><strong>Vanishing And Exploding Gradient Problems</strong></a>
+        <p style="margin-top: 0px; margin-bottom: 10px;"><span style="font-size: 12px; color: #555">21 May 2018</span></p>
+      
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item" href="/">Home</a>
+
+      
+
+      
+      
+        
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/about/">About</a>
+          
+        
+      
+        
+          
+            <a class="sidebar-nav-item" href="/archive/">Archive</a>
+          
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    </nav>
+
+    <p style="margin: 0px; color: #fff"><a href="https://github.com/jefkine" target="_blank">GitHub</p>
+    <p style="margin-top: 0px; margin-bottom: 10px;"><a href="https://twitter.com/jefkine" target="_blank">Twitter @jefkine</a></p>
+
+    <p>&copy; 2018. All rights reserved.</p>
+  </div>
+</div>
+
+
+    <div class="content container">
+      <div class="post">
+  <h1 class="post-title">Backpropagation In Convolutional Neural Networks</h1>
+  <span class="post-date">Jefkine, 5 September 2016</span>
+  <h3 id="introduction">Introduction</h3>
+
+<p>Convolutional neural networks (CNNs) are a biologically-inspired variation of the multilayer perceptrons (MLPs). Neurons in CNNs share weights unlike in MLPs where each neuron has a separate weight vector. This sharing of weights ends up reducing the overall number of trainable weights hence introducing sparsity.</p>
+
+<p><img src="/assets/images/conv.png" alt="CNN" class="img-responsive" /></p>
+
+<p>Utilizing the weights sharing strategy, neurons are able to perform convolutions on the data with the convolution filter being formed by the weights. This is then followed by a pooling operation which as a form of non-linear down-sampling, progressively reduces the spatial size of the representation thus reducing the amount of computation and parameters in the network.</p>
+
+<p>Existing between the convolution and the pooling layer is an activation function such as the ReLu layer; a <a href="http://www.jefkine.com/general/2016/08/24/formulating-the-relu/" target="_blank">non-saturating activation</a> is applied element-wise, i.e. <script type="math/tex">f(x) = max(0,x)</script> thresholding at zero. After several convolutional and pooling layers, the image size (feature map size) is reduced and more complex features are extracted.</p>
+
+<p>Eventually with a small enough feature map, the contents are squashed into a one dimension vector and fed into a fully-connected MLP for processing. The last layer of this fully-connected MLP seen as the output, is a loss layer which is used to specify how the network training penalizes the deviation between the predicted and true labels.</p>
+
+<p>Before we begin lets take look at the mathematical definitions of convolution and cross-correlation:</p>
+
+<h3 id="cross-correlation">Cross-correlation</h3>
+<p>Given an input image <script type="math/tex">I</script> and a filter (kernel) <script type="math/tex">K</script> of dimensions <script type="math/tex">k_1 \times k_2</script>, the cross-correlation operation is given by:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+(I \otimes K)_{ij} &= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} I(i+m, j+n)K(m,n) \tag {1}
+\end{align} %]]></script>
+
+<h3 id="convolution">Convolution</h3>
+<p>Given an input image <script type="math/tex">I</script> and a filter (kernel) <script type="math/tex">K</script> of dimensions <script type="math/tex">k_1 \times k_2</script>, the convolution operation is given by:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+(I \ast K)_{ij} &= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} I(i-m, j-n)K(m,n) \tag {2} \\
+&= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} I(i+m, j+n)K(-m,-n) \tag {3}
+\end{align} %]]></script>
+
+<p>From Eq. <script type="math/tex">\text{3}</script> it is easy to see that convolution is the same as cross-correlation with a flipped kernel i.e for a kernel <script type="math/tex">K</script> where <script type="math/tex">K(-m,-n) == K(m,n)</script>, convolution <script type="math/tex">==</script> cross-correlation.</p>
+
+<h3 id="convolution-neural-networks---cnns">Convolution Neural Networks - CNNs</h3>
+
+<p>CNNs consists of convolutional layers which are characterized by an input map <script type="math/tex">I</script>, a bank of filters <script type="math/tex">K</script> and biases <script type="math/tex">b</script>.</p>
+
+<p>In the case of images, we could have as input an image with height <script type="math/tex">H</script>, width <script type="math/tex">W</script> and <script type="math/tex">C = 3</script> channels (red, blue and green) such that <script type="math/tex">I \in \mathbb{R}^{H \times W \times C}</script>. Subsequently for a bank of <script type="math/tex">D</script> filters we have <script type="math/tex">K \in \mathbb{R}^{k_1 \times k_2 \times C \times D}</script> and biases <script type="math/tex">b \in \mathbb{R}^{D}</script>, one for each filter.</p>
+
+<p>The output from this convolution procedure is as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+(I \ast K)_{ij} &= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} \sum_{c = 1}^{C} K_{m,n,c} \cdot I_{i+m, j+n, c} + b \tag {4}
+\end{align} %]]></script>
+
+<p>The convolution operation carried out here is the same as cross-correlation, except that the kernel is “flipped” (horizontally and vertically).</p>
+
+<p>For the purposes of simplicity we shall use the case where the input image is grayscale i.e single channel <script type="math/tex">C = 1</script>. The Eq. <script type="math/tex">\text{4}</script> will be transformed to:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+(I \ast K)_{ij} &= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} K_{m,n} \cdot I_{i+m, j+n} + b \tag {5}
+\end{align} %]]></script>
+
+<h3 id="notation">Notation</h3>
+<p>To help us explore the forward and backpropagation, we shall make use of the following notation:</p>
+
+<ol>
+  <li><script type="math/tex">l</script> is the <script type="math/tex">l^{th}</script> layer where <script type="math/tex">l=1</script> is the first layer and <script type="math/tex">l=L</script> is the last layer.</li>
+  <li>Input <script type="math/tex">x</script> is of dimension <script type="math/tex">H \times W</script> and has <script type="math/tex">i</script> by <script type="math/tex">j</script> as the iterators</li>
+  <li>Filter or kernel <script type="math/tex">w</script> is of dimension <script type="math/tex">k_1 \times k_2</script> has <script type="math/tex">m</script> by <script type="math/tex">n</script> as the iterators</li>
+  <li><script type="math/tex">w_{m,n}^l</script> is the weight matrix connecting neurons of layer <script type="math/tex">l</script> with neurons of layer <script type="math/tex">l-1</script>.</li>
+  <li><script type="math/tex">b^l</script> is the bias unit at layer <script type="math/tex">l</script>.</li>
+  <li><script type="math/tex">x_{i,j}^l</script> is the convolved input vector at layer <script type="math/tex">l</script> plus the bias represented as
+$$
+\begin{align}
+x_{i,j}^l = \sum_{m}\sum_{n} w_{m,n}^l o_{i + m,j + n}^{l-1} + b^l
+\end{align}
+$$</li>
+  <li><script type="math/tex">o_{i,j}^l</script> is the output vector at layer <script type="math/tex">l</script> given by
+$$
+\begin{align}
+o_{i,j}^l = f(x_{i,j}^{l})
+\end{align}
+$$</li>
+  <li><script type="math/tex">f(\cdot)</script> is the activation function. Application of the activation layer to the convolved input vector at layer <script type="math/tex">l</script> is given by <script type="math/tex">f(x_{i,j}^{l})</script></li>
+</ol>
+
+<h3 id="foward-propagation">Foward Propagation</h3>
+
+<p>To perform a convolution operation, the kernel is flipped <script type="math/tex">180^\circ</script> and slid across the input feature map in equal and finite strides. At each location, the product between each element of the kernel and the input input feature map element it overlaps is computed and the results summed up to obtain the output at that current location.</p>
+
+<p>This procedure is repeated using different kernels to form as many output feature maps as desired. The concept of weight sharing is used as demonstrated in the diagram below:</p>
+
+<p><img src="/assets/images/fCNN.png" alt="forward CNN" class="img-responsive" /></p>
+
+<p>Units in convolutional layer illustrated above have receptive fields of size 4 in the input feature map and are thus only connected to 4 adjacent neurons in the input layer. This is the idea of <strong>sparse connectivity</strong> in CNNs where there exists local connectivity pattern between neurons in adjacent layers.</p>
+
+<p>The color codes of the weights joining the input layer to the convolutional layer show how the kernel weights are distributed (shared) amongst neurons in the adjacent layers. Weights of the same color are constrained to be identical.</p>
+
+<p>The convolution process here is usually expressed as a cross-correlation but with a flipped kernel. In the diagram below we illustrate a kernel that has been flipped both horizontally and vertically:</p>
+
+<p><img src="/assets/images/Flipped.png" alt="forward flipped" class="img-responsive" /></p>
+
+<p>The convolution equation of the input at layer <script type="math/tex">l</script> is given by:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+x_{i,j}^l &= \text{rot}_{180^\circ} \left\{ w_{m,n}^l \right\} \ast o_{i,j}^{l-1} + b_{i,j}^l \tag {6} \\
+x_{i,j}^l &= \sum_{m} \sum_{n} w_{m,n}^l o_{i+m,j+n}^{l-1} + b_{i,j}^l \tag {7} \\
+o_{i,j}^l &= f(x_{i,j}^l) \tag {8}
+\end{align} %]]></script>
+
+<p>This is illustrated below:</p>
+
+<p><img src="/assets/images/convolution.png" alt="forward convolution" class="img-responsive" /></p>
+
+<h3 id="error">Error</h3>
+
+<p>For a total of <script type="math/tex">P</script> predictions, the predicted network outputs <script type="math/tex">y_p</script> and their corresponding targeted values <script type="math/tex">t_p</script> the the mean squared error is given by:
+$$
+\begin{align}
+E &amp;=  \frac{1}{2}\sum_{p} \left(t_p - y_p \right)^2 \tag {9}
+\end{align}
+$$</p>
+
+<p>Learning will be achieved by adjusting the weights such that <script type="math/tex">y_p</script> is as close as possible or equals to corresponding <script type="math/tex">t_p</script>. In the classical backpropagation algorithm, the weights are changed according to the gradient descent direction of an error surface <script type="math/tex">E</script>.</p>
+
+<h3 id="backpropagation">Backpropagation</h3>
+
+<p>For backpropagation there are two updates performed, for the weights and the deltas. Lets begin with the weight update.</p>
+
+<p>We are looking to compute <script type="math/tex">\frac{\partial E}{\partial w_{m^{\prime},n^{\prime}}^l}</script> which can be interpreted as the measurement of how the change in a single pixel <script type="math/tex">w_{m^{\prime},n^{\prime}}</script> in the weight kernel affects the loss function <script type="math/tex">E</script>.</p>
+
+<p><img src="/assets/images/kernelPixelBackprop.png" alt="kernel pixel affecting backprop" class="img-responsive" /></p>
+
+<p>During forward propagation, the convolution operation ensures that the yellow pixel <script type="math/tex">w_{m^{\prime},n^{\prime}}</script> in the weight kernel makes a contribution in all the products (between each element of the weight kernel and the input feature map element it overlaps). This means that pixel <script type="math/tex">w_{m^{\prime},n^{\prime}}</script> will eventually affect all the elements in the output feature map.</p>
+
+<p>Convolution between the input feature map of dimension <script type="math/tex">H \times W</script> and the weight kernel of dimension <script type="math/tex">k_1 \times k_2</script> produces an output feature map of size <script type="math/tex">\left( H - k_1 + 1 \right)</script> by <script type="math/tex">\left( W - k_2 + 1 \right)</script>. The gradient component for the individual weights can be obtained by applying the chain rule in the following way:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial E}{\partial w_{m^{\prime},n^{\prime}}^l} &= \sum_{i=0}^{H-k_1} \sum_{j=0}^{W-k_2} \frac{\partial E}{\partial x_{i,j}^{l}} \frac{\partial x_{i,j}^{l}}{\partial w_{m^{\prime},n^{\prime}}^l} \\
+&= \sum_{i=0}^{H-k_1} \sum_{j=0}^{W-k_2} \delta^{l}_{i,j} \frac{\partial x_{i,j}^{l}}{\partial w_{m^{\prime},n^{\prime}}^l} \tag {10}
+\end{align} %]]></script>
+
+<p>In Eq. <script type="math/tex">10 \, \text{,} \, x_{i,j}^{l}</script> is equivalent to <script type="math/tex">\sum_{m} \sum_{n} w_{m,n}^{l}o_{i+m,j+n}^{l-1} + b^l</script> and expanding this part of the equation gives us:</p>
+
+<script type="math/tex; mode=display">\begin{align}
+\frac{\partial x_{i,j}^{l}}{\partial w_{m^{\prime},n^{\prime}}^l} = \frac{\partial}{\partial w_{m^{\prime},n^{\prime}}^l}\left( \sum_{m} \sum_{n} w_{m,n}^{l}o_{i+m, j+n}^{l-1} + b^l \right) \tag {11}
+\end{align}</script>
+
+<p>Further expanding the summations in Eq. <script type="math/tex">11</script> and taking the partial derivatives for all the components results in zero values for all except the components where <script type="math/tex">m = m'</script> and <script type="math/tex">n = n'</script> in <script type="math/tex">w_{m,n}^{l}o_{i+m,j+n}^{l-1}</script> as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial x_{i,j}^{l}}{\partial w_{m^{\prime},n^{\prime}}^l} &= \frac{\partial}{\partial w_{m',n'}^l}\left( w_{0,0}^{l} o_{ i + 0, j + 0}^{l-1} + \dots + w_{m',n'}^{l} o_{ i + m^{\prime}, j + n^{\prime}}^{l-1} + \dots + b^l\right) \\
+&= \frac{\partial}{\partial w_{m^{\prime},n^{\prime}}^l}\left( w_{m^{\prime},n^{\prime}}^{l} o_{ i + m^{\prime}, j + n^{\prime}}^{l-1}\right) \\
+&=  o_{i+m^{\prime},j+n^{\prime}}^{l-1} \tag {12}
+\end{align} %]]></script>
+
+<p>Substituting Eq. <script type="math/tex">12</script> in Eq. <script type="math/tex">10</script> gives us the following results:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial E}{\partial w_{m',n'}^l} &= \sum_{i=0}^{H-k_1} \sum_{j=0}^{W-k_2} \delta^{l}_{i,j} o_{ i + m^{\prime}, j + n^{\prime}}^{l-1} \tag {13} \\
+&= \text{rot}_{180^\circ} \left\{ \delta^{l}_{i,j} \right\} \ast  o_{m^{\prime},n^{\prime}}^{l-1}  \tag {14}
+\end{align} %]]></script>
+
+<p>The dual summation in Eq. <script type="math/tex">13</script> is as a result of weight sharing in the network (same weight kernel is slid over all of the input feature map during convolution). The summations represents a collection of all the gradients <script type="math/tex">\delta^{l}_{i,j}</script> coming from all the outputs in layer <script type="math/tex">l</script>.</p>
+
+<p>Obtaining gradients w.r.t to the filter maps, we have a cross-correlation which is transformed to a convolution by “flipping” the delta matrix <script type="math/tex">\delta^{l}_{i,j}</script> (horizontally and vertically) the same way we flipped the filters during the forward propagation.</p>
+
+<p>An illustration of the flipped delta matrix is shown below:</p>
+
+<p><img src="/assets/images/deltaFlipped.png" alt="flipped error matrix" class="img-responsive" /></p>
+
+<p>The diagram below shows gradients <script type="math/tex">(\delta_{11}, \delta_{12}, \delta_{21}, \delta_{22})</script> generated during backpropagation:</p>
+
+<p><img src="/assets/images/bCNN.png" alt="backward CNN" class="img-responsive" /></p>
+
+<p>The convolution operation used to obtain the new set of weights as is shown below:</p>
+
+<p><img src="/assets/images/bConvolution.png" alt="backward convolution" class="img-responsive" /></p>
+
+<p>During the reconstruction process, the deltas <script type="math/tex">(\delta_{11}, \delta_{12}, \delta_{21}, \delta_{22})</script> are used. These deltas are provided by an equation of the form:</p>
+
+<p><script type="math/tex">% <![CDATA[
+\begin{align}
+\delta^{l}_{i,j} &= \frac{\partial E}{\partial x_{i,j}^{l}} \tag {15}
+\end{align}
+\ %]]></script></p>
+
+<p>At this point we are looking to compute <script type="math/tex">\frac{\partial E}{\partial x_{i^{\prime},j^{\prime}}^l}</script> which can be interpreted as the measurement of how the change in a single pixel <script type="math/tex">x_{i^{\prime},j^{\prime}}</script> in the input feature map affects the loss function <script type="math/tex">E</script>.</p>
+
+<p><img src="/assets/images/inputPixelBackprop.png" alt="input pixel affecting backprop" class="img-responsive" /></p>
+
+<p>From the diagram above, we can see that region in the output affected by pixel <script type="math/tex">x_{i^{\prime},j^{\prime}}</script> from the input is the region in the output bounded by the dashed lines where the top left corner pixel is given by <script type="math/tex">\left(i^{\prime}-k_1+1,j^{\prime}-k_2+1 \right)</script> and the bottom right corner pixel is given by <script type="math/tex">\left(i^{\prime},j^{\prime} \right)</script>.</p>
+
+<p>Using chain rule and introducing sums give us the following equation:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial E}{\partial x_{i',j'}^{l}} &= \sum_{i,j \in Q} \frac{\partial E}{\partial x_{Q}^{l+1}}\frac{\partial x_{Q}^{l+1}}{\partial x_{i',j'}^l} \\
+&= \sum_{i,j \in Q} \delta^{l+1}_{Q} \frac{\partial x_{Q}^{l+1}}{\partial x_{i',j'}^l} \tag{16} \\
+\end{align} %]]></script>
+
+<p><script type="math/tex">Q</script> in the summation above represents the output region bounded by dashed lines and is composed of pixels in the output that are affected by the single pixel <script type="math/tex">x_{i',j'}</script> in the input feature map. A more formal way of representing Eq. <script type="math/tex">16</script> is:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial E}{\partial x_{i',j'}^{l}} &= \sum_{m = 0}^{k_1 -1} \sum_{n = 0}^{k_2 -1} \frac{\partial E}{\partial x_{i'-m, j'-n}^{l+1}}\frac{\partial x_{i'-m, j'-n}^{l+1}}{\partial x_{i',j'}^l} \\
+&= \sum_{m = 0}^{k_1 -1} \sum_{n = 0}^{k_2 -1} \delta^{l+1}_{i'-m, j'-n} \frac{\partial x_{i'-m, j'-n}^{l+1}}{\partial x_{i',j'}^l} \tag{17} \\
+\end{align} %]]></script>
+
+<p>In the region <script type="math/tex">Q</script>, the height ranges from <script type="math/tex">i' - 0</script> to <script type="math/tex">i' - (k_1 - 1)</script> and width <script type="math/tex">j' - 0</script> to <script type="math/tex">j' - (k_2 - 1)</script>. These two can simply be represented by <script type="math/tex">i' - m</script> and <script type="math/tex">j' - n</script> in the summation since the iterators <script type="math/tex">m</script> and <script type="math/tex">n</script> exists in the following similar ranges from <script type="math/tex">0 \leq m \leq k_1 - 1</script> and  <script type="math/tex">0 \leq n \leq k_2 - 1</script>.</p>
+
+<p>In Eq. <script type="math/tex">17 \, \text{,} \, x_{i^{\prime} - m, j^{\prime} - n}^{l+1}</script> is equivalent to <script type="math/tex">w_{m^{\prime},n^{\prime}}^{l+1}o_{i^{\prime} - m + m',j^{\prime} - n + n'}^{l} + b^{l+1}</script> and expanding this part of the equation gives us:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial x_{i'-m,j'-n}^{l+1}}{\partial x_{i',j'}^l} &= \frac{\partial}{\partial x_{i',j'}^l} \left( \sum_{m'} \sum_{n'} w_{m', n'}^{l+1} o_{i' - m + m',j' - n + n'}^{l} + b^{l+1} \right) \\  
+&= \frac{\partial}{\partial x_{i',j'}^l}\left( \sum_{m'} \sum_{n'} w_{m',n'}^{l+1}f\left(x_{i' - m + m',j' - n + n'}^{l}\right) + b^{l+1} \right) \tag{18}
+\end{align} %]]></script>
+
+<p>Further expanding the summation in Eq. <script type="math/tex">17</script> and taking the partial derivatives for all the components results in zero values for all except the components where <script type="math/tex">m' = m</script> and <script type="math/tex">n' = n</script> so that <script type="math/tex">f\left(x_{i' - m + m',j' - n + n'}^{l}\right)</script> becomes <script type="math/tex">f\left(x_{i',j'}^{l}\right)</script> and <script type="math/tex">w_{m',n'}^{l+1}</script> becomes <script type="math/tex">w_{m,n}^{l+1}</script> in the relevant part of the expanded summation as follows:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial x_{i^{\prime} - m,j^{\prime} - n}^{l+1}}{\partial x_{i',j'}^l} &= \frac{\partial}{\partial x_{i',j'}^l}\left( w_{m',n'}^{l+1} f\left(x_{ 0 - m + m', 0 - n + n'}^{l}\right) + \dots + w_{m,n}^{l+1} f\left(x_{i',j'}^{l}\right) + \dots + b^{l+1}\right) \\
+&= \frac{\partial}{\partial x_{i',j'}^l}\left( w_{m,n}^{l+1} f\left(x_{i',j'}^{l} \right) \right) \\
+&= w_{m,n}^{l+1} \frac{\partial}{\partial x_{i',j'}^l} \left( f\left(x_{i',j'}^{l} \right) \right) \\
+&= w_{m,n}^{l+1} f'\left(x_{i',j'}^{l}\right) \tag{19}
+\end{align} %]]></script>
+
+<p>Substituting Eq. <script type="math/tex">19</script> in Eq. <script type="math/tex">17</script> gives us the following results:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial E}{\partial x_{i',j'}^{l}} &= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} \delta^{l+1}_{i^{\prime} - m,j^{\prime} - n} w_{m,n}^{l+1} f'\left(x_{i',j'}^{l}\right) \tag{20} \\
+\end{align} %]]></script>
+
+<p>For backpropagation, we make use of the flipped kernel and as a result we will now have a convolution that is expressed as a cross-correlation with a flipped kernel:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+\begin{align}
+\frac{\partial E}{\partial x_{i',j'}^{l}} &= \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} \delta^{l+1}_{i^{\prime} - m,j^{\prime} - n} w_{m,n}^{l+1} f'\left(x_{i',j'}^{l}\right) \\
+& = \text{rot}_{180^\circ} \left\{ \sum_{m = 0}^{k_1 - 1} \sum_{n = 0}^{k_2 - 1} \delta^{l+1}_{i^{\prime} + m,j^{\prime} + n} w_{m,n}^{l+1} \right\} f'\left(x_{i',j'}^{l}\right) \tag{21} \\
+&= \delta^{l+1}_{i',j'} \ast \text{rot}_{180^\circ} \left\{ w_{m,n}^{l+1} \right\} f'\left(x_{i',j'}^{l} \right) \tag{22}
+\end{align} %]]></script>
+
+<h3 id="pooling-layer">Pooling Layer</h3>
+<p>The function of the pooling layer is to progressively reduce the spatial size of the representation to reduce the amount of parameters and computation in the network, and hence to also control overfitting. No learning takes place on the pooling layers [2].</p>
+
+<p>Pooling units are obtained using functions like max-pooling, average pooling and even L2-norm pooling. At the pooling layer, forward propagation results in an <script type="math/tex">N \times N</script> pooling block being reduced to a single value - value of the “winning unit”. Backpropagation of the pooling layer then computes the error which is acquired by this single value “winning unit”.</p>
+
+<p>To keep track of the “winning unit” its index noted during the forward pass and used for gradient routing during backpropagation. Gradient routing is done in the following ways:</p>
+
+<ul>
+  <li><strong>Max-pooling</strong> - the error is just assigned to where it comes from - the “winning unit” because other units in the previous layer’s pooling blocks did not contribute to it hence all the other assigned values of zero</li>
+  <li><strong>Average pooling</strong> - the error is multiplied by <script type="math/tex">\frac{1}{N \times N}</script> and assigned to the whole pooling block (all units get this same value).</li>
+</ul>
+
+<h3 id="conclusion">Conclusion</h3>
+<p>Convolutional neural networks employ a weight sharing strategy that leads to a significant reduction in the number of parameters that have to be learned. The presence of larger receptive field sizes of neurons in successive convolutional layers coupled with the presence of pooling layers also lead to translation invariance. As we have observed the derivations of forward and backward propagations will differ depending on what layer we are propagating through.</p>
+
+<h3 id="references">References</h3>
+<ol>
+  <li>Dumoulin, Vincent, and Francesco Visin. “A guide to convolution arithmetic for deep learning.” stat 1050 (2016): 23. <a href="https://arxiv.org/pdf/1603.07285.pdf" target="_blank">[pdf]</a></li>
+  <li>LeCun, Y., Boser, B., Denker, J.S., Henderson, D., Howard, R.E., Hubbard, W.,Jackel, L.D.: Backpropagation applied to handwritten zip code recognition. Neural computation 1(4), 541–551 (1989)</li>
+  <li><a href="https://en.wikipedia.org/wiki/Convolutional_neural_network" target="_blank">Wikipedia</a> page on Convolutional neural network</li>
+  <li>Convolutional Neural Networks (LeNet) <a href="http://deeplearning.net/tutorial/lenet.html" target="_blank">deeplearning.net</a></li>
+  <li>Convolutional Neural Networks <a href="http://ufldl.stanford.edu/tutorial/supervised/ConvolutionalNeuralNetwork/" target="_blank">UFLDL Tutorial</a></li>
+</ol>
+
+</div>
+
+<div class="related">
+  <h2>Related Posts</h2>
+  <ul class="related-posts">
+    
+  
+
+  
+    
+      <li>
+        <h3>
+          <a href="http://www.jefkine.com/general/2016/08/24/formulating-the-relu/">
+            Formulating The ReLu
+            <small>24 Aug 2016</small>
+          </a>
+        </h3>
+      </li>
+    
+  
+
+  
+    
+  
+
+  
+
+  
+    
+      <li>
+        <h3>
+          <a href="http://www.jefkine.com/general/2018/05/21/2018-05-21-vanishing-and-exploding-gradient-problems/">
+            Vanishing And Exploding Gradient Problems
+            <small>21 May 2018</small>
+          </a>
+        </h3>
+      </li>
+    
+  
+
+
+  </ul>
+</div>
+
+
+  
+<div id="disqus_thread"></div>
+<script>
+var disqus_config = function () {
+    this.page.url = 'https://jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/';
+    this.page.identifier = 'Backpropagation In Convolutional Neural Networks';
+};
+
+(function() {
+    var d = document, s = d.createElement('script');
+    s.src = '//jefkine.disqus.com/embed.js';
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+    </div>
+
+  </body>
+</html>
