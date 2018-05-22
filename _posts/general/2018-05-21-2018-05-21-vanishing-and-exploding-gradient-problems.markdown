@@ -218,7 +218,7 @@ In this article we went through the intuition behind the vanishing and exploding
 
 This leads us to the fact $$ \lambda_{1} = 1 $$ would avoid both the vanishing and exploding gradient problems and although it is not as straightforward as it seems. This fact however has been used as the intuition behind creating most of the proposed solutions.
 
-The proposed solution are discussed in brief, with some key references that the readers would find useful in obtain a greater understanding of how they work. Feel free to leave questions or feedback in the comments section.
+The proposed solutions are discussed here in brief but with some key references that the readers would find useful in obtain a greater understanding of how they work. Feel free to leave questions or feedback in the comments section.
 
 ### References ###
 1. Pascanu, Razvan; Mikolov, Tomas; Bengio, Yoshua (2012) On the difficulty of training Recurrent Neural Networks [[pdf]](https://arxiv.org/abs/1211.5063){:target="_blank"}
