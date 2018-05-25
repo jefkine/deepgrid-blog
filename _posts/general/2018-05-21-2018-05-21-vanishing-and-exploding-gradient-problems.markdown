@@ -105,9 +105,11 @@ If we perform eigendecomposition on the Jacobian matrix $$\frac{\partial \textbf
 
 Any change on the hidden state $$\Delta\textbf{h}_{t}$$ in the direction of a vector $$\textbf{v}_{i}$$ has the effect of multiplying the change with the eigenvalue associated with this eigenvector i.e $$\lambda_{i}\Delta\textbf{h}_{t}$$.
 
-The product of these Jacobians as seen in Eq. $$9$$ imply that subsequent time steps, will result in scaling the change with a factor equivalent to $$\lambda_{i}^{t}$$, where $$\text{t}$$ represents the current time step.
+The product of these Jacobians as seen in Eq. $$9$$ implies that subsequent time steps, will result in scaling the change with a factor equivalent to $$\lambda_{i}^{t}$$.
 
-Looking at the sequence $$\lambda_{i}^{1}\Delta\textbf{h}_{1}, \lambda_{i}^{2}\Delta\textbf{h}_{2}, \cdots \lambda_{i}^{n}\Delta\textbf{h}_{n}$$, it is easy to see that the factor $$\lambda_{i}^{t}$$ which represents the $$\text{i}^{th}$$ eigenvalue raised to the power of the current time step $$t$$ will end up dominating the $$\Delta\textbf{h}_{t}$$'s because this term grows exponentially fast as $$\text{t} \rightarrow \infty$$.
+$$\lambda_{i}^{t}$$ represents the $$\text{i}^{th}$$ eigenvalue raised to the power of the current time step $$t$$.
+
+Looking at the sequence $$\lambda_{i}^{1}\Delta\textbf{h}_{1}, \lambda_{i}^{2}\Delta\textbf{h}_{2}, \cdots \lambda_{i}^{n}\Delta\textbf{h}_{n}$$, it is easy to see that the factor $$\lambda_{i}^{t}$$ will end up dominating the $$\Delta\textbf{h}_{t}$$'s because this term grows exponentially fast as $$\text{t} \rightarrow \infty$$.
 
 This means that if the largest eigenvalue $$\lambda_{1} \lt 1$$ then the gradient will varnish while if the value of $$\lambda_{1} \gt 1$$, the gradient explodes.
 
@@ -121,7 +123,7 @@ $$
 
 In Eq. $$10$$ above, we set $$\gamma_{\textbf{W}}$$, the largest eigenvalue associated with $$\left\lVert \textbf{W}^\top \right\rVert$$  as its upper bound, while $$ \gamma_{\textbf{h}} $$ largest eigenvalue associated with $$\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert$$ as its corresponding the upper bound.
 
-Depending on the activation function $$f$$ chosen for the model, the derivative $$f'$$ in $$\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert$$ will be upper bounded by different values. For $$\textbf{tanh}$$ we have $$\gamma_{\textbf{h}} = 1$$ while for $$\textbf{sigmoid}$$ we have $$\gamma_{\textbf{h}} = 1/4$$. This is illustrated in the diagram below:
+Depending on the activation function $$f$$ chosen for the model, the derivative $$f'$$ in $$\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert$$ will be upper bounded by different values. For $$\textbf{tanh}$$ we have $$\gamma_{\textbf{h}} = 1$$ while for $$\textbf{sigmoid}$$ we have $$\gamma_{\textbf{h}} = 1/4$$. These two are illustrated in the diagrams below:
 
 ![Activation Plots](/assets/images/activation_derivatives.png){:class="img-responsive"}
 
