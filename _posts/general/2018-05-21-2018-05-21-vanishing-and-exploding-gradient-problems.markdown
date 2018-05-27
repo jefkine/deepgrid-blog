@@ -214,6 +214,12 @@ $$
 
 **Gated Recurrent Unit:** This method makes use of units known as GRUs [7] which have only two gating units that that modulate the flow of information inside the unit thus making them less restrictive as compared to the LSTMs, while still having the ability to allow information to flow for an indefinite amount of time hence overcoming the vanishing gradients problem.
 
+**Orthogonal initialization:** This method makes use of a well known property of orthogonal matrices: "all the eigenvalues of an orthogonal matrix have absolute value $$1$$".
+
+Initialization of weights using matrices that are orthogonal results in weight matrices $$\textbf{W}$$ that have the leading eigenvalue with an absolute value $$1$$. Looking at Eq. $$9$$ it is easy to conclude that in the products of the Jacobians involved, the leading eigenvalue $$\lambda_{1}^{t}$$ will not have an adverse effect on the overall gradient value in the long run since $$\lambda_{1}^{t} = 1$$ as $$\text{t} \rightarrow \infty$$
+
+This makes it possible to avoid both the vanishing and exploding gradient problem using this orthogonal initialization of weights. This method [9] however is not used in isolation and is often combined with other more advanced architectures like LSTMs to achieve optimal results.
+
 ### Conclusions ###
 
 In this article we went through the intuition behind the vanishing and exploding gradient problems. The values of the largest eigenvalue $$ \lambda_{1} $$ have a direct influence in the way the gradient behaves eventually. $$ \lambda_{1} \lt 1 $$ causes the gradients to varnish while $$ \lambda_{1} \gt 1 $$ caused the gradients to explode.
@@ -231,3 +237,4 @@ The proposed solutions are discussed here in brief but with some key references 
 6. Hochreiter, S. and Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9(8):1735–1780. [[pdf]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.4320&rep=rep1&type=pdf){:target="_blank"}
 7. Kyunghyun Cho, Bart Van Merriënboer, Caglar Gulcehre, Dzmitry Bahdanau, Fethi Bougares, Holger Schwenk, and Yoshua Bengio. Learning phrase representations using rnn encoder–decoder for statistical machine translation. In Proc. EMNLP, pages 1724–1734. ACL, 2014 [[pdf]](https://arxiv.org/pdf/1406.1078.pdf){:target="_blank"}
 8. Lukoˇseviˇcius, M. and Jaeger, H. (2009). Reservoir computing approaches to recurrent neural network training. Computer Science Review, 3(3), 127–149. [[pdf]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.843&rep=rep1&type=pdf){:target="_blank"}
+9. Mikael Henaff, Arthur Szlam, Yann LeCun Recurrent Orthogonal Networks and Long-Memory Tasks. 2016 [[pdf]](https://arxiv.org/abs/1602.06662){:target="_blank"}
