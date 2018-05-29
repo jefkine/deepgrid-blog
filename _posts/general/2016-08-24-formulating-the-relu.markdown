@@ -39,7 +39,7 @@ The variations of rectified linear (ReL) take the following forms:
 2. **PReLu**:  Parametric ReLu - obtained when $$ a_i $$ is a learnable parameter. The resultant activation function is of the form $$ f(x_i) = max(0,x_i) + a_i min(0,x_i) $$  
 3. **LReLu**: Leaky ReLu - obtained when $$ a_i = 0.01 $$ i.e when $$ a_i $$ is a small and fixed value [1]. The resultant activation function is of the form $$ f(x_i) = max(0,x_i) + 0.01 min(0,x_i) $$
 4. **RReLu**: Randomized Leaky ReLu - the randomized version of leaky ReLu, obtained when $$ a_{ji} $$ is a random number
-sampled from a uniform distribution $$ U(l,u) $$ i.e $$ a_{ji} \, U \sim (l, u); \, l < u \, \text{and} \, l, u \in [0; 1) $$. See [2].
+sampled from a uniform distribution $$ U(l,u) $$ i.e $$ a_{ji} \sim U(l, u); \, l < u \, \text{and} \, l, u \in [0; 1) $$. See [2].
 
 ### From Sigmoid To ReLu ###
 A sigmoid function is a special case of the logistic function which is given by $$ f(x) = 1/\left(1+e^{-x}\right) $$ where $$ x $$ is the input and it's output boundaries are $$ (0,1) $$.
