@@ -6,7 +6,7 @@ author: Jefkine
 comments: true
 date: 2018-05-21 20:22:02 +0300
 meta: A look at the problem of vanishing or exploding gradients. Two of the common problems associated with training of deep neural networks using gradient-based learning methods and backpropagation"
-cover-image: rnn_model.png
+cover-image: rnn_full_model.png
 source: http://www.jefkine.com
 category: general
 ---
@@ -25,7 +25,7 @@ Connections among the hidden units allow the model to iteratively build a releva
 
 An illustration of the RNN model is given below:
 
-![RNN Model](/assets/images/rnn_model.png){:class="img-responsive"}
+![RNN Model](/assets/images/rnn_full_model.png){:class="img-responsive"}
 
 For any given time point $$t$$, the hidden state $$\textbf{h}_{t}$$ is computed using a function $$f_{\textbf{W}}$$ with parameters $$\textbf{W}$$ that takes in the current data point $$\textbf{x}_{t}$$ and hidden state in the previous time point $$\textbf{h}_{t-1}$$. i.e $$f_{\textbf{W}}(\textbf{h}_{t-1}, \textbf{x}_{t})$$.
 
