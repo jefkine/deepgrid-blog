@@ -38,17 +38,17 @@ In its functional form, the recurrent neural network can be represented as:
 $$
 \begin{align}
 \textbf{h}_{t} &= f_{\textbf{W}}\left(\textbf{h}_{t-1}, \textbf{x}_{t} \right) \tag{1} \\
-\textbf{h}_{t} &= f\left(\textbf{W}^{hx}x_{t} + \textbf{W}^{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2a} \\
-\textbf{h}_{t} &= \textbf{tanh}\left(\textbf{W}^{hx}x_{t} +  \textbf{W}^{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2b} \\
-\hat{\textbf{y}}_{t} &= \textbf{softmax}\left(\textbf{W}^{yh}h_{t} + \textbf{b}^{y}\right) \tag{3}
+\textbf{h}_{t} &= f\left(\textbf{W}_{hx}x_{t} + \textbf{W}_{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2a} \\
+\textbf{h}_{t} &= \textbf{tanh}\left(\textbf{W}_{hx}x_{t} +  \textbf{W}_{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2b} \\
+\hat{\textbf{y}}_{t} &= \textbf{softmax}\left(\textbf{W}_{yh}h_{t} + \textbf{b}^{y}\right) \tag{3}
 \end{align}
 $$
 
 From the above equations we can see that the RNN model is parameterized by three weight matrices
 
-* $$\textbf{W}^{hx} \in \mathbb{R}^{h \times x}$$ is the weight matrix between input and the hidden layer
-* $$\textbf{W}^{hh} \in \mathbb{R}^{h \times h}$$ is the weight matrix between two hidden layers
-* $$\textbf{W}^{yh} \in \mathbb{R}^{y \times h}$$ is the weight matrix between the hidden layer and the output
+* $$\textbf{W}_{hx} \in \mathbb{R}^{h \times x}$$ is the weight matrix between input and the hidden layer
+* $$\textbf{W}_{hh} \in \mathbb{R}^{h \times h}$$ is the weight matrix between two hidden layers
+* $$\textbf{W}_{yh} \in \mathbb{R}^{y \times h}$$ is the weight matrix between the hidden layer and the output
 
 We also have bias vectors incorporated into the model as well
 
@@ -93,15 +93,15 @@ $$
 \end{align}
 $$
 
-The product of Jacobians in Eq. $$7$$ features the derivative of the term $$\textbf{h}_{t}$$ w.r.t $$\textbf{h}_{t-1}$$, i.e $$\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}$$ which when evaluated on Eq. $$2a$$ yields $$\textbf{W}^\top \left[ f'\left(\textbf{h}_{t-1}\right) \right]$$, hence:
+The product of Jacobians in Eq. $$7$$ features the derivative of the term $$\textbf{h}_{t}$$ w.r.t $$\textbf{h}_{t-1}$$, i.e $$\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}$$ which when evaluated on Eq. $$2a$$ yields $$\textbf{W}_\top \left[ f'\left(\textbf{h}_{t-1}\right) \right]$$, hence:
 
 $$
 \begin{align}
-\prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} = \prod_{i=k+1}^{t} \textbf{W}^\top \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right]  \tag{9}
+\prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} = \prod_{i=k+1}^{t} \textbf{W}_\top \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right]  \tag{9}
 \end{align}
 $$
 
-If we perform eigendecomposition on the Jacobian matrix $$\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}$$ given by $$\textbf{W}^\top \text{diag} \left[ f'\left(\textbf{h}_{t-1}\right) \right]$$, we get the eigenvalues $$\lambda_{1}, \lambda_{2}, \cdots, \lambda_{n}$$ where $$\lvert\lambda_{1}\rvert \gt \lvert\lambda_{2}\rvert \gt\cdots \gt \lvert\lambda_{n}\rvert$$ and the corresponding eigenvectors $$\textbf{v}_{1},\textbf{v}_{1},\cdots,\textbf{v}_{n}$$.
+If we perform eigendecomposition on the Jacobian matrix $$\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}$$ given by $$\textbf{W}_\top \text{diag} \left[ f'\left(\textbf{h}_{t-1}\right) \right]$$, we get the eigenvalues $$\lambda_{1}, \lambda_{2}, \cdots, \lambda_{n}$$ where $$\lvert\lambda_{1}\rvert \gt \lvert\lambda_{2}\rvert \gt\cdots \gt \lvert\lambda_{n}\rvert$$ and the corresponding eigenvectors $$\textbf{v}_{1},\textbf{v}_{1},\cdots,\textbf{v}_{n}$$.
 
 Any change on the hidden state $$\Delta\textbf{h}_{t}$$ in the direction of a vector $$\textbf{v}_{i}$$ has the effect of multiplying the change with the eigenvalue associated with this eigenvector i.e $$\lambda_{i}\Delta\textbf{h}_{t}$$.
 
@@ -117,11 +117,11 @@ This means that if the largest eigenvalue $$\lambda_{1} \lt 1$$ then the gradien
 
 $$
 \begin{align}
-\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}^\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \tag{10}
+\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}_\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \tag{10}
 \end{align}
 $$
 
-In Eq. $$10$$ above, we set $$\gamma_{\textbf{W}}$$, the largest eigenvalue associated with $$\left\lVert \textbf{W}^\top \right\rVert$$  as its upper bound, while $$ \gamma_{\textbf{h}} $$ largest eigenvalue associated with $$\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert$$ as its corresponding the upper bound.
+In Eq. $$10$$ above, we set $$\gamma_{\textbf{W}}$$, the largest eigenvalue associated with $$\left\lVert \textbf{W}_\top \right\rVert$$  as its upper bound, while $$ \gamma_{\textbf{h}} $$ largest eigenvalue associated with $$\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert$$ as its corresponding the upper bound.
 
 Depending on the activation function $$f$$ chosen for the model, the derivative $$f'$$ in $$\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert$$ will be upper bounded by different values. For $$\textbf{tanh}$$ we have $$\gamma_{\textbf{h}} = 1$$ while for $$\textbf{sigmoid}$$ we have $$\gamma_{\textbf{h}} = 1/4$$. These two are illustrated in the diagrams below:
 
@@ -131,7 +131,7 @@ The chosen upper bounds $$\gamma_{\textbf{W}}$$ and $$ \gamma_{\textbf{h}} $$ en
 
 $$
 \begin{align}
-\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}^\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \leq \gamma_{\textbf{W}} \gamma_{\textbf{h}} \tag{11}
+\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}_\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \leq \gamma_{\textbf{W}} \gamma_{\textbf{h}} \tag{11}
 \end{align}
 $$
 
@@ -157,7 +157,7 @@ These problems ultimately prevent the input at time step $$k$$ (past) to have an
 
 This helps prevent the gradient from growing exponentially beyond $$n$$ steps. A major drawback with this method is that it sacrifices the ability to learn long-range dependencies beyond the limited $$t -n$$ range.
 
-**L1 and L2 Penalty On The Recurrent Weights $$\textbf{W}^{hh}$$:** This method [1] uses regularization to ensures that the spectral radius of the $$\textbf{W}^{hh}$$ does not exceed $$1$$, which in itself is a sufficient condition for gradients not to explode.
+**L1 and L2 Penalty On The Recurrent Weights $$\textbf{W}_{hh}$$:** This method [1] uses regularization to ensures that the spectral radius of the $$\textbf{W}_{hh}$$ does not exceed $$1$$, which in itself is a sufficient condition for gradients not to explode.
 
 The drawback here however is that the model is limited to a simple regime, all input has to die out exponentially fast in time. This method cannot be used to train a generator model and also sacrifices the ability to learn long-range dependencies.
 
@@ -175,9 +175,9 @@ $$
 
 The drawback here is that this method introduces an additional hyper-parameter; the threshold.
 
-**Echo State Networks:** This method [1,8] works by not learning the weights between input to hidden $$\textbf{W}^{hx}$$ and the weights between hidden to hidden $$\textbf{W}^{hh}$$. These weights are instead sampled from carefully chosen distributions. Training data is used to learn the  weights between hidden to output $$\textbf{W}^{yh}$$.
+**Echo State Networks:** This method [1,8] works by not learning the weights between input to hidden $$\textbf{W}_{hx}$$ and the weights between hidden to hidden $$\textbf{W}_{hh}$$. These weights are instead sampled from carefully chosen distributions. Training data is used to learn the  weights between hidden to output $$\textbf{W}_{yh}$$.
 
-The effect of this is that when weights in the recurrent connections $$\textbf{W}^{hh}$$ are sampled so that their spectral radius is slightly less than 1, information fed into the model is held for a limited (small) number of time steps during the training process.
+The effect of this is that when weights in the recurrent connections $$\textbf{W}_{hh}$$ are sampled so that their spectral radius is slightly less than 1, information fed into the model is held for a limited (small) number of time steps during the training process.
 
 The drawback here is that these models loose the ability to learn long-range dependencies. This set up also has a negative effect on the varnishing gradient problem.
 
@@ -205,8 +205,8 @@ The regularization term is as follows:
 
 $$
 \begin{align}
-\frac{\partial \Omega}{\textbf{W}^{hh}} &= \sum_{k} \frac{\partial \Omega_{k}}{\textbf{W}^{hh}} \tag{15} \\
-&= \sum_{k} \frac{\partial\left( \frac{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} {\textbf{W}^{hh}}^\top \textbf{diag} \left( f'(\textbf{h}_{k})\right) \right\rVert}{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} \right\rVert} -1 \right)^{2}}{\partial \textbf{W}^{hh}}  \tag{16}
+\frac{\partial \Omega}{\textbf{W}_{hh}} &= \sum_{k} \frac{\partial \Omega_{k}}{\textbf{W}_{hh}} \tag{15} \\
+&= \sum_{k} \frac{\partial\left( \frac{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} {\textbf{W}_{hh}}^\top \textbf{diag} \left( f'(\textbf{h}_{k})\right) \right\rVert}{\left\lVert \frac{\partial \textbf{E}}{\partial \textbf{h}_{k+1}} \right\rVert} -1 \right)^{2}}{\partial \textbf{W}_{hh}}  \tag{16}
 \end{align}
 $$
 
