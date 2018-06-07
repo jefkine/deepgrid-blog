@@ -93,15 +93,15 @@ $$
 \end{align}
 $$
 
-The product of Jacobians in Eq. $$7$$ features the derivative of the term $$\textbf{h}_{t}$$ w.r.t $$\textbf{h}_{t-1}$$, i.e $$\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}$$ which when evaluated on Eq. $$2a$$ yields $$\textbf{W}_\top \left[ f'\left(\textbf{h}_{t-1}\right) \right]$$, hence:
+The product of Jacobians in Eq. $$7$$ features the derivative of the term $$\textbf{h}_{t}$$ w.r.t $$\textbf{h}_{t-1}$$, i.e $$\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}$$ which when evaluated on Eq. $$2a$$ yields $$\textbf{W}^\top \left[ f'\left(\textbf{h}_{t-1}\right) \right]$$, hence:
 
 $$
 \begin{align}
-\prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} = \prod_{i=k+1}^{t} \textbf{W}_\top \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right]  \tag{9}
+\prod_{i=k+1}^{t} \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} = \prod_{i=k+1}^{t} \textbf{W}^\top \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right]  \tag{9}
 \end{align}
 $$
 
-If we perform eigendecomposition on the Jacobian matrix $$\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}$$ given by $$\textbf{W}_\top \text{diag} \left[ f'\left(\textbf{h}_{t-1}\right) \right]$$, we get the eigenvalues $$\lambda_{1}, \lambda_{2}, \cdots, \lambda_{n}$$ where $$\lvert\lambda_{1}\rvert \gt \lvert\lambda_{2}\rvert \gt\cdots \gt \lvert\lambda_{n}\rvert$$ and the corresponding eigenvectors $$\textbf{v}_{1},\textbf{v}_{1},\cdots,\textbf{v}_{n}$$.
+If we perform eigendecomposition on the Jacobian matrix $$\frac{\partial \textbf{h}_{t}}{\partial \textbf{h}_{t-1}}$$ given by $$\textbf{W}^\top \text{diag} \left[ f'\left(\textbf{h}_{t-1}\right) \right]$$, we get the eigenvalues $$\lambda_{1}, \lambda_{2}, \cdots, \lambda_{n}$$ where $$\lvert\lambda_{1}\rvert \gt \lvert\lambda_{2}\rvert \gt\cdots \gt \lvert\lambda_{n}\rvert$$ and the corresponding eigenvectors $$\textbf{v}_{1},\textbf{v}_{1},\cdots,\textbf{v}_{n}$$.
 
 Any change on the hidden state $$\Delta\textbf{h}_{t}$$ in the direction of a vector $$\textbf{v}_{i}$$ has the effect of multiplying the change with the eigenvalue associated with this eigenvector i.e $$\lambda_{i}\Delta\textbf{h}_{t}$$.
 
@@ -117,11 +117,11 @@ This means that if the largest eigenvalue $$\lambda_{1} \lt 1$$ then the gradien
 
 $$
 \begin{align}
-\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}_\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \tag{10}
+\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}^\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \tag{10}
 \end{align}
 $$
 
-In Eq. $$10$$ above, we set $$\gamma_{\textbf{W}}$$, the largest eigenvalue associated with $$\left\lVert \textbf{W}_\top \right\rVert$$  as its upper bound, while $$ \gamma_{\textbf{h}} $$ largest eigenvalue associated with $$\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert$$ as its corresponding the upper bound.
+In Eq. $$10$$ above, we set $$\gamma_{\textbf{W}}$$, the largest eigenvalue associated with $$\left\lVert \textbf{W}^\top \right\rVert$$  as its upper bound, while $$ \gamma_{\textbf{h}} $$ largest eigenvalue associated with $$\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert$$ as its corresponding the upper bound.
 
 Depending on the activation function $$f$$ chosen for the model, the derivative $$f'$$ in $$\left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert$$ will be upper bounded by different values. For $$\textbf{tanh}$$ we have $$\gamma_{\textbf{h}} = 1$$ while for $$\textbf{sigmoid}$$ we have $$\gamma_{\textbf{h}} = 1/4$$. These two are illustrated in the diagrams below:
 
@@ -131,7 +131,7 @@ The chosen upper bounds $$\gamma_{\textbf{W}}$$ and $$ \gamma_{\textbf{h}} $$ en
 
 $$
 \begin{align}
-\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}_\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \leq \gamma_{\textbf{W}} \gamma_{\textbf{h}} \tag{11}
+\left\lVert \frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}} \right\rVert \leq \left\lVert \textbf{W}^\top \right\rVert \left\lVert \text{diag} \left[ f'\left(\textbf{h}_{i-1}\right) \right] \right\rVert \leq \gamma_{\textbf{W}} \gamma_{\textbf{h}} \tag{11}
 \end{align}
 $$
 
