@@ -48,4 +48,4 @@ version:          2.1.0
 github:
   repo:           https://github.com/jefkine
 
-gems: [jekyll-paginate, jekyll-paginate-categories, jekyll-gist, jekyll-sitemap, jekyll-seo-tag]
+plugins: [jekyll-paginate, jekyll-paginate-categories, jekyll-gist, jekyll-sitemap, jekyll-seo-tag]

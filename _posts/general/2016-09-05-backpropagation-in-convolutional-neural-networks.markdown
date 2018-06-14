@@ -230,7 +230,7 @@ $$
 In the region $$ Q $$, the height ranges from $$ i' - 0 $$ to $$ i' - (k_1 - 1) $$ and width $$ j' - 0 $$ to $$ j' - (k_2 - 1) $$. These two can simply be represented by $$ i' - m $$ and $$ j' - n $$ in the summation since the iterators $$ m $$ and $$ n $$ exists in the following similar ranges from $$ 0 \leq m \leq k_1 - 1 $$ and  $$ 0 \leq n \leq k_2 - 1 $$.
 
 
-In Eq. $$ 17 \, \text{,} \, x_{i^{\prime} - m, j^{\prime} - n}^{l+1} $$ is equivalent to $$ w_{m^{\prime},n^{\prime}}^{l+1}o_{i^{\prime} - m + m',j^{\prime} - n + n'}^{l} + b^{l+1} $$ and expanding this part of the equation gives us:
+In Eq. $$ 17 \, \text{,} \, x_{i^{\prime} - m, j^{\prime} - n}^{l+1} $$ is equivalent to $$  \sum_{m'} \sum_{n'} w_{m^{\prime},n^{\prime}}^{l+1}o_{i^{\prime} - m + m',j^{\prime} - n + n'}^{l} + b^{l+1} $$ and expanding this part of the equation gives us:
 
 $$
 \begin{align}
