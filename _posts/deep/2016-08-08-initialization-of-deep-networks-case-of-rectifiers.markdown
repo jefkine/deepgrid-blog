@@ -146,7 +146,7 @@ The variations of rectified linear (ReL) take the following forms:
 2. **PReLu**:  Parametric ReLu - obtained when $$ a_i $$ is a learnable parameter. The resultant activation function is of the form $$ f(y_i) = max(0,y_i) + a_i min(0,y_i) $$  
 3. **LReLu**: Leaky ReLu - obtained when $$ a_i = 0.01 $$ i.e when $$ a_i $$ is a small and fixed value [3]. The resultant activation function is of the form $$ f(y_i) = max(0,y_i) + 0.01 min(0,y_i) $$
 4. **RReLu**: Randomized Leaky ReLu - the randomized version of leaky ReLu, obtained when $$ a_{ji} $$ is a random number
-sampled from a uniform distribution $$ U(l,u) $$ i.e $$ a_{ji} \, U \sim (l, u); \, l < u \, \text{and} \, l, u \in [0; 1) $$. See [4].
+sampled from a uniform distribution $$ U(l,u) $$ i.e $$ a_{ji} \sim U(l, u); \, l < u \, \text{and} \, l, u \in [0; 1) $$. See [2].
 
 Rectifier activation function is simply a threshold at zero hence allowing the network to easily obtain sparse representations. For example, after uniform initialization of the weights, around $$ 50\% $$ of hidden units continuous output values are real zeros, and this fraction can easily increase with sparsity-inducing regularization [5].
 
