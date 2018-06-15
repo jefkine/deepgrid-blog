@@ -44,7 +44,7 @@ $$
 \end{align}
 $$
 
-From Eq. $$ \text{3} $$ it is easy to see that convolution is the same as cross-correlation with a flipped kernel i.e for a kernel $$ K $$ where $$ K(-m,-n) == K(m,n) $$, convolution $$==$$ cross-correlation.
+From Eq. $$ \text{3} $$ it is easy to see that convolution is the same as cross-correlation with a flipped kernel i.e: for a kernel $$ K $$ where $$ K(-m,-n) == K(m,n) $$.
 
 ### Convolution Neural Networks - CNNs ###
 

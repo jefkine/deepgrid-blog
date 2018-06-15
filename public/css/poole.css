@@ -331,6 +331,7 @@ tbody tr:nth-child(odd) th {
 .page,
 .post {
   margin-bottom: 4em;
+  text-align: justify; /* @@EDITS by jefkine*/
 }
 
 /* Blog post or page title */
