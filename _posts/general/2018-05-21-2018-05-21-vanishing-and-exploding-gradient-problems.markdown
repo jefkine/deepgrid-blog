@@ -38,9 +38,9 @@ In its functional form, the recurrent neural network can be represented as:
 $$
 \begin{align}
 \textbf{h}_{t} &= f_{\textbf{W}}\left(\textbf{h}_{t-1}, \textbf{x}_{t} \right) \tag{1} \\
-\textbf{h}_{t} &= f\left(\textbf{W}_{hx}x_{t} + \textbf{W}_{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2a} \\
-\textbf{h}_{t} &= \textbf{tanh}\left(\textbf{W}_{hx}x_{t} +  \textbf{W}_{hh}h_{t-1} + \textbf{b}^{h}\right) \tag{2b} \\
-\hat{\textbf{y}}_{t} &= \textbf{softmax}\left(\textbf{W}_{yh}h_{t} + \textbf{b}^{y}\right) \tag{3}
+\textbf{h}_{t} &= f\left(\textbf{W}_{hx}x_{t} + \textbf{W}_{hh}h_{t-1} + \textbf{b}_{h}\right) \tag{2a} \\
+\textbf{h}_{t} &= \textbf{tanh}\left(\textbf{W}_{hx}x_{t} +  \textbf{W}_{hh}h_{t-1} + \textbf{b}_{h}\right) \tag{2b} \\
+\hat{\textbf{y}}_{t} &= \textbf{softmax}\left(\textbf{W}_{yh}h_{t} + \textbf{b}_{y}\right) \tag{3}
 \end{align}
 $$
 
@@ -52,8 +52,8 @@ From the above equations we can see that the RNN model is parameterized by three
 
 We also have bias vectors incorporated into the model as well
 
-* $$\textbf{b}^{h} \in \mathbb{R}^{h}$$ is the bias vector added to the hidden layer
-* $$\textbf{b}^{y} \in \mathbb{R}^{y}$$ is the bias vector added to the output layer
+* $$\textbf{b}_{h} \in \mathbb{R}^{h}$$ is the bias vector added to the hidden layer
+* $$\textbf{b}_{y} \in \mathbb{R}^{y}$$ is the bias vector added to the output layer
 
 $$\textbf{tanh}(\cdot)$$ is the non-linearity added to the hidden states while $$\textbf{softmax}(\cdot)$$ is the activation function used in the output layer.
 
@@ -229,7 +229,7 @@ This leads us to the fact $$ \lambda_{1} = 1 $$ would avoid both the vanishing a
 The proposed solutions are discussed here in brief but with some key references that the readers would find useful in obtain a greater understanding of how they work. Feel free to leave questions or feedback in the comments section.
 
 ### References ###
-1. Pascanu, Razvan; Mikolov, Tomas; Bengio, Yoshua (2012) On the difficulty of training Recurrent Neural Networks [[pdf]](https://arxiv.org/abs/1211.5063){:target="_blank"}
+1. Pascanu, Razvan; Mikolov, Tomas; Bengio, Yoshua (2012) On the difficulty of training Recurrent Neural Networks [[pdf]](https://arxiv.org/pdf/1211.5063.pdf){:target="_blank"}
 2. Doya, K. (1993). Bifurcations of recurrent neural networks in gradient descent learning. IEEE Transactions on Neural Networks, 1, 75–80. [[pdf]](https://pdfs.semanticscholar.org/b579/27b713a6f9b73c7941f99144165396483478.pdf){:target="_blank"}
 3. Martens, J. and Sutskever, I. (2011). Learning recurrent neural networks with Hessian-free optimization. In Proc. ICML’2011 . ACM. [[pdf]](http://www.icml-2011.org/papers/532_icmlpaper.pdf){:target="_blank"}
 4. Jaeger, H., Lukosevicius, M., Popovici, D., and Siewert, U. (2007). Optimization and applications of echo state networks with leaky- integrator neurons. Neural Networks, 20(3), 335–352. [[pdf]](https://pdfs.semanticscholar.org/a10e/c7cc6c42c7780ef631c038b16c49ed865038.pdf){:target="_blank"}
@@ -237,4 +237,4 @@ The proposed solutions are discussed here in brief but with some key references 
 6. Hochreiter, S. and Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9(8):1735–1780. [[pdf]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.4320&rep=rep1&type=pdf){:target="_blank"}
 7. Kyunghyun Cho, Bart Van Merriënboer, Caglar Gulcehre, Dzmitry Bahdanau, Fethi Bougares, Holger Schwenk, and Yoshua Bengio. Learning phrase representations using rnn encoder–decoder for statistical machine translation. In Proc. EMNLP, pages 1724–1734. ACL, 2014 [[pdf]](https://arxiv.org/pdf/1406.1078.pdf){:target="_blank"}
 8. Lukoˇseviˇcius, M. and Jaeger, H. (2009). Reservoir computing approaches to recurrent neural network training. Computer Science Review, 3(3), 127–149. [[pdf]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.843&rep=rep1&type=pdf){:target="_blank"}
-9. Mikael Henaff, Arthur Szlam, Yann LeCun Recurrent Orthogonal Networks and Long-Memory Tasks. 2016 [[pdf]](https://arxiv.org/abs/1602.06662){:target="_blank"}
+9. Mikael Henaff, Arthur Szlam, Yann LeCun Recurrent Orthogonal Networks and Long-Memory Tasks. 2016 [[pdf]](https://arxiv.org/pdf/1602.06662.pdf){:target="_blank"}
