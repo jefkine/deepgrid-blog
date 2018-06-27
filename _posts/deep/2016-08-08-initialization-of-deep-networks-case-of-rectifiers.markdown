@@ -369,8 +369,8 @@ return uniform(shape, s, name=name)
 
 
 ### References ###
-1. He, Kaiming, et al. "Delving deep into rectifiers: Surpassing human-level performance on imagenet classification." Proceedings of the IEEE International Conference on Computer Vision. 2015. [[pdf]](https://arxiv.org/pdf/1502.01852v1.pdf){:target="_blank"}
-2. Glorot Xavier, and Yoshua Bengio. "Understanding the difficulty of training deep feedforward neural networks." Aistats. Vol. 9. 2010. [[pdf]](http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf){:target="_blank"}
-3. A. L. Maas, A. Y. Hannun, and A. Y. Ng. "Rectifier nonlinearities improve neural network acoustic models." In ICML, 2013. [[pdf]](https://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf){:target="_blank"}
-4. Xu, Bing, et al. "Empirical Evaluation of Rectified Activations in Convolution Network." [[pdf]](http://arxiv.org/pdf/1505.00853v2.pdf){:target="_blank"}
-5. Glorot, Xavier, Antoine Bordes, and Yoshua Bengio. "Deep Sparse Rectifier Neural Networks." Aistats. Vol. 15. No. 106. 2011. [[pdf]](http://jmlr.org/proceedings/papers/v15/glorot11a/glorot11a.pdf){:target="_blank"}
+1. He, Kaiming, et al. "Delving deep into rectifiers: Surpassing human-level performance on imagenet classification." Proceedings of the IEEE International Conference on Computer Vision. 2015. [[PDF]](https://arxiv.org/pdf/1502.01852v1.pdf){:target="_blank"}
+2. Glorot Xavier, and Yoshua Bengio. "Understanding the difficulty of training deep feedforward neural networks." Aistats. Vol. 9. 2010. [[PDF]](http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf){:target="_blank"}
+3. A. L. Maas, A. Y. Hannun, and A. Y. Ng. "Rectifier nonlinearities improve neural network acoustic models." In ICML, 2013. [[PDF]](https://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf){:target="_blank"}
+4. Xu, Bing, et al. "Empirical Evaluation of Rectified Activations in Convolution Network." [[PDF]](http://arxiv.org/pdf/1505.00853v2.pdf){:target="_blank"}
+5. Glorot, Xavier, Antoine Bordes, and Yoshua Bengio. "Deep Sparse Rectifier Neural Networks." Aistats. Vol. 15. No. 106. 2011. [[PDF]](http://jmlr.org/proceedings/papers/v15/glorot11a/glorot11a.pdf){:target="_blank"}

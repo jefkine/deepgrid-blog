@@ -111,7 +111,7 @@ $$\lambda_{i}^{t}$$ represents the $$\text{i}^{th}$$ eigenvalue raised to the po
 
 Looking at the sequence $$\lambda_{i}^{1}\Delta\textbf{h}_{1}, \lambda_{i}^{2}\Delta\textbf{h}_{2}, \cdots \lambda_{i}^{n}\Delta\textbf{h}_{n}$$, it is easy to see that the factor $$\lambda_{i}^{t}$$ will end up dominating the $$\Delta\textbf{h}_{t}$$'s because this term grows exponentially fast as $$\text{t} \rightarrow \infty$$.
 
-This means that if the largest eigenvalue $$\lambda_{1} \lt 1$$ then the gradient will varnish while if the value of $$\lambda_{1} \gt 1$$, the gradient explodes.
+This means that if the largest eigenvalue $$\lambda_{1} \lt 1$$ then the gradient will vanish while if the value of $$\lambda_{1} \gt 1$$, the gradient explodes.
 
 **Alternate intuition:** Lets take a deeper look at the norms associated with these Jacobians:
 
@@ -145,9 +145,9 @@ $$
 \end{align}
 $$
 
-As the sequence gets longer (i.e the distance between $$t$$ and $$k$$ increases), then the value of $$\gamma$$ will determine if the gradient either gets very large (**explodes**) on gets very small (**varnishes**).
+As the sequence gets longer (i.e the distance between $$t$$ and $$k$$ increases), then the value of $$\gamma$$ will determine if the gradient either gets very large (**explodes**) on gets very small (**vanishes**).
 
-Since $$\gamma$$ is associated with the leading eigenvalues of $$\frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}}$$, the recursive product of $$t -k$$ Jacobian matrices as seen in Eq. $$12$$ makes it possible to influence the overall gradient in such a way that for $$\gamma \lt 1$$ the gradient tends to **varnish**  while for $$\gamma \gt 1$$ the gradient tends to **explode**. This corresponds nicely with our earlier intuition involving $$\Delta\textbf{h}_{t}$$.
+Since $$\gamma$$ is associated with the leading eigenvalues of $$\frac{\partial \textbf{h}_{i}}{\partial \textbf{h}_{i-1}}$$, the recursive product of $$t -k$$ Jacobian matrices as seen in Eq. $$12$$ makes it possible to influence the overall gradient in such a way that for $$\gamma \lt 1$$ the gradient tends to **vanish**  while for $$\gamma \gt 1$$ the gradient tends to **explode**. This corresponds nicely with our earlier intuition involving $$\Delta\textbf{h}_{t}$$.
 
 These problems ultimately prevent the input at time step $$k$$ (past) to have any influence on the output at stage $$t$$ (present).
 
@@ -179,7 +179,7 @@ The drawback here is that this method introduces an additional hyper-parameter; 
 
 The effect of this is that when weights in the recurrent connections $$\textbf{W}_{hh}$$ are sampled so that their spectral radius is slightly less than 1, information fed into the model is held for a limited (small) number of time steps during the training process.
 
-The drawback here is that these models loose the ability to learn long-range dependencies. This set up also has a negative effect on the varnishing gradient problem.
+The drawback here is that these models loose the ability to learn long-range dependencies. This set up also has a negative effect on the vanishing gradient problem.
 
 ### Proposed Solutions For Vanishing Gradients ###
 
@@ -222,19 +222,19 @@ This makes it possible to avoid both the vanishing and exploding gradient proble
 
 ### Conclusions ###
 
-In this article we went through the intuition behind the vanishing and exploding gradient problems. The values of the largest eigenvalue $$ \lambda_{1} $$ have a direct influence in the way the gradient behaves eventually. $$ \lambda_{1} \lt 1 $$ causes the gradients to varnish while $$ \lambda_{1} \gt 1 $$ caused the gradients to explode.
+In this article we went through the intuition behind the vanishing and exploding gradient problems. The values of the largest eigenvalue $$ \lambda_{1} $$ have a direct influence in the way the gradient behaves eventually. $$ \lambda_{1} \lt 1 $$ causes the gradients to vanish while $$ \lambda_{1} \gt 1 $$ caused the gradients to explode.
 
 This leads us to the fact $$ \lambda_{1} = 1 $$ would avoid both the vanishing and exploding gradient problems and although it is not as straightforward as it seems. This fact however has been used as the intuition behind creating most of the proposed solutions.
 
 The proposed solutions are discussed here in brief but with some key references that the readers would find useful in obtain a greater understanding of how they work. Feel free to leave questions or feedback in the comments section.
 
 ### References ###
-1. Pascanu, Razvan; Mikolov, Tomas; Bengio, Yoshua (2012) On the difficulty of training Recurrent Neural Networks [[pdf]](https://arxiv.org/pdf/1211.5063.pdf){:target="_blank"}
-2. Doya, K. (1993). Bifurcations of recurrent neural networks in gradient descent learning. IEEE Transactions on Neural Networks, 1, 75–80. [[pdf]](https://pdfs.semanticscholar.org/b579/27b713a6f9b73c7941f99144165396483478.pdf){:target="_blank"}
-3. Martens, J. and Sutskever, I. (2011). Learning recurrent neural networks with Hessian-free optimization. In Proc. ICML’2011 . ACM. [[pdf]](http://www.icml-2011.org/papers/532_icmlpaper.pdf){:target="_blank"}
-4. Jaeger, H., Lukosevicius, M., Popovici, D., and Siewert, U. (2007). Optimization and applications of echo state networks with leaky- integrator neurons. Neural Networks, 20(3), 335–352. [[pdf]](https://pdfs.semanticscholar.org/a10e/c7cc6c42c7780ef631c038b16c49ed865038.pdf){:target="_blank"}
-5. Yoshua Bengio, Nicolas Boulanger-Lewandowski, Razvan Pascanu, Advances in Optimizing Recurrent Networks arXiv report 1212.0901, 2012. [[pdf]](https://arxiv.org/pdf/1212.0901.pdf){:target="_blank"}
-6. Hochreiter, S. and Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9(8):1735–1780. [[pdf]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.4320&rep=rep1&type=pdf){:target="_blank"}
-7. Kyunghyun Cho, Bart Van Merriënboer, Caglar Gulcehre, Dzmitry Bahdanau, Fethi Bougares, Holger Schwenk, and Yoshua Bengio. Learning phrase representations using rnn encoder–decoder for statistical machine translation. In Proc. EMNLP, pages 1724–1734. ACL, 2014 [[pdf]](https://arxiv.org/pdf/1406.1078.pdf){:target="_blank"}
-8. Lukoˇseviˇcius, M. and Jaeger, H. (2009). Reservoir computing approaches to recurrent neural network training. Computer Science Review, 3(3), 127–149. [[pdf]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.843&rep=rep1&type=pdf){:target="_blank"}
-9. Mikael Henaff, Arthur Szlam, Yann LeCun Recurrent Orthogonal Networks and Long-Memory Tasks. 2016 [[pdf]](https://arxiv.org/pdf/1602.06662.pdf){:target="_blank"}
+1. Pascanu, Razvan; Mikolov, Tomas; Bengio, Yoshua (2012) On the difficulty of training Recurrent Neural Networks [[PDF]](https://arxiv.org/pdf/1211.5063.pdf){:target="_blank"}
+2. Doya, K. (1993). Bifurcations of recurrent neural networks in gradient descent learning. IEEE Transactions on Neural Networks, 1, 75–80. [[PDF]](https://pdfs.semanticscholar.org/b579/27b713a6f9b73c7941f99144165396483478.pdf){:target="_blank"}
+3. Martens, J. and Sutskever, I. (2011). Learning recurrent neural networks with Hessian-free optimization. In Proc. ICML’2011 . ACM. [[PDF]](http://www.icml-2011.org/papers/532_icmlpaper.pdf){:target="_blank"}
+4. Jaeger, H., Lukosevicius, M., Popovici, D., and Siewert, U. (2007). Optimization and applications of echo state networks with leaky- integrator neurons. Neural Networks, 20(3), 335–352. [[PDF]](https://pdfs.semanticscholar.org/a10e/c7cc6c42c7780ef631c038b16c49ed865038.pdf){:target="_blank"}
+5. Yoshua Bengio, Nicolas Boulanger-Lewandowski, Razvan Pascanu, Advances in Optimizing Recurrent Networks arXiv report 1212.0901, 2012. [[PDF]](https://arxiv.org/pdf/1212.0901.pdf){:target="_blank"}
+6. Hochreiter, S. and Schmidhuber, J. (1997). Long short-term memory. Neural Computation, 9(8):1735–1780. [[PDF]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.4320&rep=rep1&type=pdf){:target="_blank"}
+7. Kyunghyun Cho, Bart Van Merriënboer, Caglar Gulcehre, Dzmitry Bahdanau, Fethi Bougares, Holger Schwenk, and Yoshua Bengio. Learning phrase representations using rnn encoder–decoder for statistical machine translation. In Proc. EMNLP, pages 1724–1734. ACL, 2014 [[PDF]](https://arxiv.org/pdf/1406.1078.pdf){:target="_blank"}
+8. Lukoˇseviˇcius, M. and Jaeger, H. (2009). Reservoir computing approaches to recurrent neural network training. Computer Science Review, 3(3), 127–149. [[PDF]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.843&rep=rep1&type=pdf){:target="_blank"}
+9. Mikael Henaff, Arthur Szlam, Yann LeCun Recurrent Orthogonal Networks and Long-Memory Tasks. 2016 [[PDF]](https://arxiv.org/pdf/1602.06662.pdf){:target="_blank"}

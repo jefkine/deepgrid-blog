@@ -226,5 +226,5 @@ FMs also feature some notable improvements over other models including
 * Factorization of parameters allows for estimation of higher order interaction effects even if no observations for the interactions are available
 
 ### References ###
-1. A Factorization Machines by Steffen Rendle - In: Data Mining (ICDM), 2010 IEEE 10th International Conference on. (2010) 995–1000 [[pdf]](http://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf){:target="_blank"}
-2. Factorization machines with libfm S Rendle ACM Transactions on Intelligent Systems and Technology (TIST) 3 (3), 57 (2012) [[pdf]](http://www.csie.ntu.edu.tw/~b97053/paper/Factorization%20Machines%20with%20libFM.pdf){:target="_blank"}
+1. A Factorization Machines by Steffen Rendle - In: Data Mining (ICDM), 2010 IEEE 10th International Conference on. (2010) 995–1000 [[PDF]](http://www.csie.ntu.edu.tw/~b97053/paper/Rendle2010FM.pdf){:target="_blank"}
+2. Factorization machines with libfm S Rendle ACM Transactions on Intelligent Systems and Technology (TIST) 3 (3), 57 (2012) [[PDF]](http://www.csie.ntu.edu.tw/~b97053/paper/Factorization%20Machines%20with%20libFM.pdf){:target="_blank"}

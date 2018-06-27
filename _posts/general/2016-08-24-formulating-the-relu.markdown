@@ -80,6 +80,6 @@ ReLu (Rectified Linear Units) have recently become an alternative activation fun
 * ReLu activations overfit more easily than sigmoids, this sets them up nicely to be used in combination with dropout, a technique to avoid overfitting.
 
 ### References ###
-1. A. L. Maas, A. Y. Hannun, and A. Y. Ng. "Rectifier nonlinearities improve neural network acoustic models." In ICML, 2013. [[pdf]](https://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf){:target="_blank"}
-2. Xu, Bing, et al. "Empirical Evaluation of Rectified Activations in Convolution Network." [[pdf]](http://arxiv.org/pdf/1505.00853v2.pdf){:target="_blank"}
-3. Nair, Vinod, and Geoffrey E. Hinton. "Rectified linear units improve restricted boltzmann machines." Proceedings of the 27th International Conference on Machine Learning (ICML-10). 2010.  [[pdf]](http://www.cs.toronto.edu/~fritz/absps/reluICML.pdf){:target="_blank"}
+1. A. L. Maas, A. Y. Hannun, and A. Y. Ng. "Rectifier nonlinearities improve neural network acoustic models." In ICML, 2013. [[PDF]](https://web.stanford.edu/~awni/papers/relu_hybrid_icml2013_final.pdf){:target="_blank"}
+2. Xu, Bing, et al. "Empirical Evaluation of Rectified Activations in Convolution Network." [[PDF]](http://arxiv.org/pdf/1505.00853v2.pdf){:target="_blank"}
+3. Nair, Vinod, and Geoffrey E. Hinton. "Rectified linear units improve restricted boltzmann machines." Proceedings of the 27th International Conference on Machine Learning (ICML-10). 2010.  [[PDF]](http://www.cs.toronto.edu/~fritz/absps/reluICML.pdf){:target="_blank"}

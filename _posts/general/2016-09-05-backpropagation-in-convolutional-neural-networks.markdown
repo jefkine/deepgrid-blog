@@ -282,7 +282,7 @@ To keep track of the "winning unit" its index noted during the forward pass and 
 Convolutional neural networks employ a weight sharing strategy that leads to a significant reduction in the number of parameters that have to be learned. The presence of larger receptive field sizes of neurons in successive convolutional layers coupled with the presence of pooling layers also lead to translation invariance. As we have observed the derivations of forward and backward propagations will differ depending on what layer we are propagating through.
 
 ### References ###
-1. Dumoulin, Vincent, and Francesco Visin. "A guide to convolution arithmetic for deep learning." stat 1050 (2016): 23. [[pdf]](https://arxiv.org/pdf/1603.07285.pdf){:target="_blank"}
+1. Dumoulin, Vincent, and Francesco Visin. "A guide to convolution arithmetic for deep learning." stat 1050 (2016): 23. [[PDF]](https://arxiv.org/pdf/1603.07285.pdf){:target="_blank"}
 2. LeCun, Y., Boser, B., Denker, J.S., Henderson, D., Howard, R.E., Hubbard, W.,Jackel, L.D.: Backpropagation applied to handwritten zip code recognition. Neural computation 1(4), 541–551 (1989)
 3. [Wikipedia](https://en.wikipedia.org/wiki/Convolutional_neural_network){:target="_blank"} page on Convolutional neural network
 4. Convolutional Neural Networks (LeNet) [deeplearning.net](http://deeplearning.net/tutorial/lenet.html){:target="_blank"}

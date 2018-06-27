@@ -318,7 +318,7 @@ It is worth noting that the time required for the initialization process is negl
 
 ### References ###
 1. A weight initialization method for improving training speed in feedforward neural network Jim Y.F. Yam, Tommy W.S. Chow
- (1998) [[pdf]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.8140&rep=rep1&type=pdf){:target="_blank"}
+ (1998) [[PDF]](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.470.8140&rep=rep1&type=pdf){:target="_blank"}
 2. Y.F. Yam, T.W.S. Chow, Determining initial weights of feedforward neural networks based on least-squares method, Neural Process. Lett. 2 (1995) 13-17.
 3. Y.F. Yam, T.W.S. Chow, A new method in determining the initial weights of feedforward neural
 networks, Neurocomputing 16 (1997) 23-32.

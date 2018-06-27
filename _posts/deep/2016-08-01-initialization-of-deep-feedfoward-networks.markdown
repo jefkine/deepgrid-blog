@@ -226,6 +226,6 @@ return uniform(shape, s, name=name)
 {% endhighlight %}
 
 ### References ###
-1. Glorot Xavier, and Yoshua Bengio. "Understanding the difficulty of training deep feedforward neural networks." Aistats. Vol. 9. 2010. [[pdf]](http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf){:target="_blank"}
+1. Glorot Xavier, and Yoshua Bengio. "Understanding the difficulty of training deep feedforward neural networks." Aistats. Vol. 9. 2010. [[PDF]](http://jmlr.org/proceedings/papers/v9/glorot10a/glorot10a.pdf){:target="_blank"}
 2. Bradley, D. (2009). Learning in modular systems. Doctoral dissertation, The Robotics Institute, Carnegie Mellon University.
-3. Wikipedia - "Product of independent variables". [Variance](https://en.wikipedia.org/wiki/Variance#Product_of_independent_variables){:target="_blank"}.
+3. [Wikipedia](https://en.wikipedia.org/wiki/Variance#Product_of_independent_variables){:target="_blank"} - Variance: "Product of independent variables".
