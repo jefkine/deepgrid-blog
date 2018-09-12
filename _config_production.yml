@@ -50,4 +50,4 @@ github:
 
 plugins: [jekyll-paginate, jekyll-paginate-categories, jekyll-gist, jekyll-sitemap, jekyll-seo-tag]
 
-environment: development
+environment: production
